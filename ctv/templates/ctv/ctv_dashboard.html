@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}CTV Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 🧾 CTV Heading -->
+  <div class="form-card-prh">
+    <h2 class="section-title-RS">
+      CONTACT VALUE DETAILED
+    </h2>
+  </div>
+
+  <!-- 📝 CTV Form Section -->
+{% if not is_admin %}
+<section class="form-section">
+  <h2>
+    <i class="fas fa-file-contract"></i> CTV FORM
+  </h2>
+
+  <div id="formContent" class="form-content" style="display: block;">
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="form-grid">
+        <div class="form-cell">{{ form.client_name_ctv.label_tag }}{{ form.client_name_ctv }}</div>
+        <div class="form-cell">{{ form.project_id_ctv.label_tag }}{{ form.project_id_ctv }}</div>
+        <div class="form-cell">{{ form.wo_no_ctv.label_tag }}{{ form.wo_no_ctv }}</div>
+        <div class="form-cell">{{ form.description_work_ctv.label_tag }}{{ form.description_work_ctv }}</div>
+        <div class="form-cell">{{ form.start_date_ctv.label_tag }}{{ form.start_date_ctv }}</div>
+        <div class="form-cell">{{ form.finish_date_ctv.label_tag }}{{ form.finish_date_ctv }}</div>
+        <div class="form-cell">{{ form.contract_value_ctv.label_tag }}{{ form.contract_value_ctv }}</div>
+        <div class="form-cell">{{ form.vat_ait_ctv.label_tag }}{{ form.vat_ait_ctv }}</div>
+        <div class="form-cell">{{ form.vat_ctv.label_tag }}{{ form.vat_ctv }}</div>
+        <div class="form-cell">{{ form.ait_ctv.label_tag }}{{ form.ait_ctv }}</div>
+        <div class="form-cell">{{ form.vat_ait_amount_ctv.label_tag }}{{ form.vat_ait_amount_ctv }}</div>
+        <div class="form-cell">{{ form.actual_contract_value_ctv.label_tag }}{{ form.actual_contract_value_ctv }}</div>
+      </div>
+
+      <!-- Flatpickr setup -->
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+      <script>
+        flatpickr("#id_start_date_ctv", {
+            dateFormat: "d-m-Y",
+            allowInput: true,
+            altInput: true,
+            altFormat: "d-m-Y",
+            clickOpens: true
+        });
+        flatpickr("#id_finish_date_ctv", {
+            dateFormat: "d-m-Y",
+            allowInput: true,
+            altInput: true,
+            altFormat: "d-m-Y",
+            clickOpens: true
+        });
+      </script>
+
+      <div class="form-actions">
+        <button type="submit" class="btn green">
+          {% if mode == 'edit' %}Update{% else %}Save{% endif %}
+        </button>
+        {% if mode != 'list' %}
+          <a href="{% url 'ctv_dashboard' %}" class="btn gray">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<!-- 🔍 Search Section-(Client Name-Based) -->
+<section class="filter-section">
+  <h2>🔍 FILTERING</h2>
+  <form method="get" class="filter-form">
+    <div class="filter-row">
+      <input type="text" name="client_name_ctv" value="{{ client_name_ctv }}" placeholder="Search by Client Name">
+      <button type="submit" class="btn blue">Filter</button>
+    </div>
+  </form>
+</section>
+
+<!-- 📋 CTV List -->
+<section class="table-section">
+  <header class="table-header">
+    <h2><i class="fas fa-list"></i> CTV LIST</h2>
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No</th>
+        <th>Name of Client</th>
+        <th>Project ID</th>
+        <th>Work Order No</th>
+        <th>Work Description</th>
+        <th>Start Date</th>
+        <th>Finish Date</th>
+        <th>Contract Value</th>
+        <th>VAT + AIT</th>
+        <th>VAT</th>
+        <th>AIT</th>
+        <th>VAT & AIT Amount</th>
+        <th>Actual Contract Value</th>
+        {% if not readonly %}
+        <th>Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for ctv in ctvs %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ ctv.client_name_ctv }}</td>
+          <td>{{ ctv.project_id_ctv }}</td>
+          <td>{{ ctv.wo_no_ctv }}</td>
+          <td>{{ ctv.description_work_ctv }}</td>
+          <td>{{ ctv.start_date_ctv|date:"d-m-Y" }}</td>
+          <td>{{ ctv.finish_date_ctv|date:"d-m-Y" }}</td>
+          <td>{{ ctv.contract_value_ctv }}</td>
+          <td>{{ ctv.vat_ait_ctv }}</td>
+          <td>{{ ctv.vat_ctv }}</td>
+          <td>{{ ctv.ait_ctv }}</td>
+          <td>{{ ctv.vat_ait_amount_ctv }}</td>
+          <td>{{ ctv.actual_contract_value_ctv }}</td>
+          <td>
+            {% if not readonly %}
+              {% if ctv.created_by == request.user %}
+                <a href="{% url 'edit_ctv' ctv.pk %}?q={{ query }}" class="btn yellow action-btn">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+                <form method="post" action="{% url 'delete_ctv' ctv.pk %}?q={{ query }}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn red action-btn" onclick="return confirm('Delete this record?');">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="14" class="no-data">No CTV records found.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+
+      <tr>
+        <!-- Grand Total label up to column 7 -->
+        <td colspan="7" class="text-right"><strong>Grand Total</strong></td>
+        <td><strong>{{ total_contract_value_ctv|floatformat:2 }}</strong></td>
+        <td colspan="3"></td>
+        <td><strong>{{ total_vat_ait_amount_ctv|floatformat:2 }}</strong></td>
+        <td><strong>{{ total_actual_contract_value_ctv|floatformat:2 }}</strong></td>
+        {% if not readonly %}<td></td>{% endif %}
+      </tr>
+      
+    </tfoot>
+  </table>
+</section>
+
+  <!-- 📋 Pagination -->
+  {% if ctvs.paginator.num_pages > 1 %}
+    <footer class="pagination-footer">
+      <nav class="pagination">
+        {% if ctvs.has_previous %}
+          <a href="?q={{ query }}&page={{ ctvs.previous_page_number }}" class="page-link">Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ ctvs.number }} of {{ ctvs.paginator.num_pages }}</span>
+        {% if ctvs.has_next %}
+          <a href="?q={{ query }}&page={{ ctvs.next_page_number }}" class="page-link">Next</a>
+        {% endif %}
+      </nav>
+    </footer>
+  {% endif %}
+</div>
+
+<!-- ✅ Auto Calculation Script (vat_ait_amount_ctv + actual_contract_value_ctv) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const contractValueInput = document.getElementById("id_contract_value_ctv");
+    const vatRateInput = document.getElementById("id_vat_ctv");
+    const aitRateInput = document.getElementById("id_ait_ctv");
+    const vatAitAmountInput = document.getElementById("id_vat_ait_amount_ctv");
+    const actualContractValueInput = document.getElementById("id_actual_contract_value_ctv");
+
+    function updateValues() {
+      const contractValue = parseFloat(contractValueInput.value) || 0;
+      if (contractValue <= 0) {
+        // Do nothing until contract value is entered
+        vatAitAmountInput.value = "";
+        actualContractValueInput.value = "";
+        return;
+      }
+
+      // Strip % and convert to float (same as Python save())
+      const vatRate = vatRateInput.value ? parseFloat(vatRateInput.value.replace("%", "")) : 0.0;
+      const aitRate = aitRateInput.value ? parseFloat(aitRateInput.value.replace("%", "")) : 0.0;
+
+      // ✅ VAT + AIT amount
+      const vatAitAmount = ((contractValue * vatRate) + (contractValue * aitRate)) / 100;
+      vatAitAmountInput.value = vatAitAmount.toFixed(2);
+
+      // ✅ Actual Contract Value = Contract Value - VAT+AIT
+      const actualContractValue = contractValue - vatAitAmount;
+      actualContractValueInput.value = actualContractValue.toFixed(2);
+    }
+
+    if (contractValueInput && vatRateInput && aitRateInput && vatAitAmountInput && actualContractValueInput) {
+      // Only trigger calculation when VAT or AIT is selected, after contract value is entered
+      vatRateInput.addEventListener("change", updateValues);
+      aitRateInput.addEventListener("change", updateValues);
+
+      // Optional: recalc if contract value changes after VAT/AIT already chosen
+      contractValueInput.addEventListener("input", updateValues);
+    }
+  });
+</script>
+
+<!-- Custom CSS-(Without-Form Section) -->
+<style>
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1200px;   
+  margin: auto;        
+  padding: 30px;  
+  
+}
+
+/* Main Heading title-(Project Detailed) */
+.section-title-RS {
+  font-size: 20px;          /* heading size */
+  font-weight: bold;        /* make it stand out */
+  color: #038ffa;          /* dark slate color */
+  margin-top: 10px;         /* extra spacing above */
+  margin-bottom: 10px;      /* extra spacing below */
+  text-transform: uppercase; /* keep the title in caps */
+  letter-spacing: 1px;      /* add spacing between letters */
+}
+
+/* User Form-Inner-Heading */
+.form-section h2 {
+  display: flex;                 /* Heading makes as flex container */
+  font-size: 18px;
+  font-family: 'Trebuchet MS';
+  margin-bottom: 10px;           /* Space bellow-Heading */
+  margin-top: 20px;       
+  color: #333;                 /* Heading-Color */
+  align-items: center;           /* Vertically-(Icon+Heading)-Center/Left */
+  gap: 8px;                      /* Icon & Heading-(Space-Horizontally)-I/D */
+
+}
+
+/* User Form-(Grid layout for inputs) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;    /* 2-Grid-(Column-based)-(User Form)-(1fr & 1fr)-(1fr-I/D)-(Grid-I/D) */
+  column-gap: 15px;                  /* Gap-Between-2-Column-(I/D) */
+  row-gap: 8px;                      /* Gap-Between-(2-Row/2-Entry Box)-(I/D) */
+  
+}
+
+/* User Form-Label-(On top of-Entry Box) */
+.form-cell label {
+  display: block;
+  margin-bottom: 5px;     /* Label Height-(On top of-Entry Box-I/D) */
+  font-family: 'Trebuchet MS';
+  font-size: 16px;
+  font-weight: bold;
+  color: #444;
+}
+
+/* User Form-(Entry Box) */
+.form-cell input,
+.form-cell textarea,
+.form-cell select {
+  width: 100%;
+  padding: 4px;                /* Entry Box-Height-I/D */
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;          /* In-Put-Box-Color Change */
+ box-sizing: border-box;
+     
+}
+
+/* User Form-(Action Buttons)-(Save & Cancel) */
+.form-actions {
+   display: flex;
+  margin-top: 15px;    /* Space-(On top of)-(Save & Cancel-Button) */
+  gap: 10px;           /* Gap between-2-Buttons */
+
+}
+
+/* User Form-(Action Button-Save) */
+.btn.green {
+  display: flex;              /* enable flexbox */
+  background: #28a745;
+  color: white;
+  width: 64px;        /* example width */
+  height: 26px;        /* example height */
+  margin-top: -2px;    /* space above */
+  margin-bottom: -2px; /* space below */
+  border-radius: 4px;  /* rounded corners */
+  cursor: pointer;     /* pointer on hover */
+  font-size: 14px;     /* text size */
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+/* User Form-(Action Button-Cancel) */
+.btn.gray {
+  display: flex;              
+  background: #606366ff;
+  color: white;
+  width: 64px;        
+  height: 26px;        
+  margin-top: -2px;    
+  margin-bottom: -2px; 
+  border-radius: 4px;  
+  cursor: pointer;     
+  font-size: 14px;     
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+.filter-row {
+  display: flex;
+  justify-content: flex-start; /* keep them side by side */
+  align-items: center;
+  gap: 20px; /* controls spacing between the two filters */
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px; /* spacing between input and button */
+}
+
+/* Filter Section */
+.filter-section h2 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-top: 20px;
+  margin-bottom: 10px;        /* Text-bellow-Heading-Up & Down */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section input[type="text"] {
+  padding: 11px 14px;             /* 11px-I/D-Filter Box-Height-Increase/Decrease */
+  border: 1px solid #cfd8e3;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 240px;           
+  height: 4px;           
+
+}
+
+.filter-section .btn.blue {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 64px;          
+  height: 28px;  
+  margin-top: -3px;       /* Above-Button, Height-I/D */
+  margin-bottom: 10px;    /* Bellow-Button, Height-I/D */
+  margin-left: 8px;
+  align-items: center;
+  font-family: 'Trebuchet MS';
+
+}
+
+/* Table with Action Buttons-(Edit & Delete) */
+.table-header {
+  margin-bottom: -2px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  
+}
+
+.table-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;    /* Bellow-Heading-Table-Up & Down */
+  margin-top: 8px; 
+
+}
+
+table {
+  width: 120%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+thead {
+  background-color: #f3f3f3;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  height: 35px;     /* Set desired row height */
+}
+
+th {
+  font-weight: 600;
+  background-color: #0078d4;
+  color: white;
+  height: 26px;          /* Table-Header-Row Height-Increase/Decrease */
+  white-space: nowrap;   /* Prevent-Table Header Warp-Text */
+ 
+}
+
+td {
+  color: #444;
+  height: 22px;       /* Table-Row Height/Cell Height-Increase/Decrease */
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Only Action Buttons based-(Edit-btn yellow and Delete-btn red) */
+.btn.yellow {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: background-color 0.3s ease;
+  width: 56px;     /* Adjust as needed */
+  height: 8px;     /* Adjust as needed */
+  margin-bottom: 1px; 
+  
+}
+
+.btn.red {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  transition: background-color 0.3s ease;
+  width: 80px;     /* Delete Button-Width */
+  height: 24px;     /* Delete-Button-Height */
+  margin-bottom: 1px; 
+
+}
+
+.action-btn {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+}
+
+/* Paginator Section */
+.pagination-footer {
+  padding: 16px 20px;
+  margin-top: -10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #0078d4;
+  font-weight: 500;
+}
+.page-link {
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0078d4;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #cce4f7;
+}
+
+</style>
+
+{% endblock %}

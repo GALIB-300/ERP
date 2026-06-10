@@ -1,0 +1,607 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}WS Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 🔍 Search Section-(Project Name-Based) -->
+  <section class="filter-section">
+    <h2>🔍 FILTERING</h2>
+    <form method="get" class="filter-form">
+      <div class="filter-row">
+        <input type="text" name="project_name_ws" value="{{ project_name_ws }}" placeholder="Search by Project Name">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- 📋 Table + Gantt Side by Side -->
+  <div class="content-flex">
+    
+    <!-- 📋 WS Project List -->
+<section class="table-section">
+  <header class="table-header">
+    <h2><i class="fas fa-list"></i> WS PROJECT LIST</h2>
+    {% if not readonly %}
+      <a href="{% url 'ws_add' %}" class="btn green add-btn">
+        <i class="fas fa-plus"></i> Add Project
+      </a>
+    {% endif %}
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No</th>
+        <th>Project Name</th>
+        <th>Task Name</th>
+        <th>Planned Start</th>
+        <th>Planned Finish</th>
+        <th>Start Date</th>
+        <th>Finish Date</th>
+        <th>Planned Progress</th>
+        <th>Actual Progress</th>
+        {% if not readonly %}
+          <th>Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for ws in ws_projects %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ ws.project_name_ws }}</td>
+          <td>{{ ws.task_name_ws }}</td>
+          <td>{{ ws.planned_start }}</td>
+          <td>{{ ws.planned_finish }}</td>
+          <td>{{ ws.start_date }}</td>
+          <td>{{ ws.finish_date }}</td>
+          <td>{{ ws.planned_progress }}%</td>
+          <td>{{ ws.actual_progress }}%</td>
+          {% if not readonly %}
+            <td>
+              {% if ws.created_by == request.user %}
+                <a href="{% url 'edit_ws' ws.pk %}?q={{ query }}" class="btn yellow action-btn">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+                <form method="post" action="{% url 'delete_ws' ws.pk %}?q={{ query }}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn red action-btn" onclick="return confirm('Delete this project?');">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="{% if not readonly %}10{% else %}9{% endif %}" class="no-data">
+            No WS project records found.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <!-- Cover the first 7 columns -->
+        <td colspan="7" class="text-right"><strong>Average</strong></td>
+        <!-- Show averages under Planned Progress and Actual Progress -->
+        <td><strong>{{ average_planned_progress }}%</strong></td>
+        <td><strong>{{ average_actual_progress }}%</strong></td>
+        {% if not readonly %}
+          <td></td>
+        {% endif %}
+      </tr>
+    </tfoot>
+  </table>
+
+      <!-- 📋 Pagination -->
+      {% if ws_projects.paginator.num_pages > 1 %}
+        <footer class="pagination-footer">
+          <nav class="pagination">
+            {% if ws_projects.has_previous %}
+              <a href="?q={{ query }}&project_name_ws={{ project_name_ws }}&page={{ ws_projects.previous_page_number }}" class="page-link">Previous</a>
+            {% endif %}
+            <span class="page-info">Page {{ ws_projects.number }} of {{ ws_projects.paginator.num_pages }}</span>
+            {% if ws_projects.has_next %}
+              <a href="?q={{ query }}&project_name_ws={{ project_name_ws }}&page={{ ws_projects.next_page_number }}" class="page-link">Next</a>
+            {% endif %}
+          </nav>
+        </footer>
+      {% endif %}
+    </section>
+
+    <!-- 📊 Gantt Chart -->
+    <section id="gantt-panel">
+      <div id="gantt-ws"></div>
+    </section>
+  </div>
+</div>
+
+<!-- ✅ Gantt initialization for WS -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("{% url 'ws_gantt_chart_data' %}")
+    .then(response => response.json())
+    .then(tasks => {
+      if (!tasks.length) {
+        console.warn("No WS Gantt tasks received.");
+        return;
+      }
+
+      // Sort tasks by start date
+      tasks.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+      // Get first task start date as string (YYYY-MM-DD)
+      const firstTaskStart = new Date(tasks[0].start).toISOString().split("T")[0];
+
+      // Initialize Gantt
+      const gantt = new Gantt("#gantt-ws", tasks, {
+        view_mode: "Month",
+        bar_height: 22,
+        padding: 12,
+        column_width: 20, // default is 30, smaller compresses months
+        start_date: firstTaskStart   // must be string, not Date object
+      });
+
+      setTimeout(() => {
+        // ✅ Change full month names to short (Jan, Feb, Mar…)
+        document.querySelectorAll("#gantt-ws .grid-header .month").forEach(cell => {
+          const text = cell.textContent.trim();
+          const shortMap = {
+            "January": "Jan", "February": "Feb", "March": "Mar",
+            "April": "Apr", "May": "May", "June": "Jun",
+            "July": "Jul", "August": "Aug", "September": "Sep",
+            "October": "Oct", "November": "Nov", "December": "Dec"
+          };
+          if (shortMap[text]) {
+            cell.textContent = shortMap[text];
+          }
+        });
+
+        // Base bar (blue)
+        document.querySelectorAll("#gantt-ws .bar").forEach(bar => {
+          bar.style.fill = "#0078d4";
+        });
+
+        // Actual progress (red)
+        document.querySelectorAll("#gantt-ws .bar-progress").forEach(progress => {
+          const parentBar = progress.closest(".bar-group").querySelector(".bar");
+          if (parentBar) {
+            const barY = parseFloat(parentBar.getAttribute("y"));
+            const barHeight = parseFloat(parentBar.getAttribute("height"));
+            const progressHeight = barHeight * 1;
+            progress.setAttribute("y", barY + (barHeight - progressHeight) / 2);
+            progress.setAttribute("height", progressHeight);
+          }
+          progress.style.fill = "#dc3545";
+        });
+
+        // Planned progress (yellow)
+        const barGroups = document.querySelectorAll("#gantt-ws .bar-group");
+        barGroups.forEach((barGroup, idx) => {
+          const t = tasks[idx];
+          if (t.planned_progress == null) return;
+          const parentBar = barGroup.querySelector(".bar");
+          if (!parentBar) return;
+          const barY = parseFloat(parentBar.getAttribute("y"));
+          const barHeight = parseFloat(parentBar.getAttribute("height"));
+          const progressHeight = barHeight * 1;
+          const barX = parseFloat(parentBar.getAttribute("x"));
+          const barWidth = parseFloat(parentBar.getAttribute("width"));
+          const plannedWidth = (t.planned_progress / 100) * barWidth;
+          if (plannedWidth <= 0) return;
+          const plannedRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          plannedRect.setAttribute("x", barX);
+          plannedRect.setAttribute("y", barY + (barHeight - progressHeight) / 2);
+          plannedRect.setAttribute("width", plannedWidth);
+          plannedRect.setAttribute("height", progressHeight);
+          plannedRect.setAttribute("fill", "rgb(242, 234, 5)");
+          plannedRect.setAttribute("fill-opacity", "0.6");
+          const actualProgress = barGroup.querySelector(".bar-progress");
+          if (actualProgress) {
+            barGroup.insertBefore(plannedRect, actualProgress);
+          } else {
+            barGroup.appendChild(plannedRect);
+          }
+        });
+      }, 1500);
+    })
+    .catch(error => console.error("Failed to load WS Gantt data:", error));
+});
+</script>
+
+<!-- Custom Styles -->
+<style>
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1200px;   
+  margin: auto;        
+  padding: 30px;  
+  
+}
+
+/* Main Heading title-(Project Detailed) */
+.section-title-RS {
+  font-size: 20px;          /* heading size */
+  font-weight: bold;        /* make it stand out */
+  color: #038ffa;          /* dark slate color */
+  margin-top: 10px;         /* extra spacing above */
+  margin-bottom: 10px;      /* extra spacing below */
+  text-transform: uppercase; /* keep the title in caps */
+  letter-spacing: 1px;      /* add spacing between letters */
+}
+
+/* User Form-Inner-Heading */
+.form-section h2 {
+  display: flex;                 /* Heading makes as flex container */
+  font-size: 18px;
+  font-family: 'Trebuchet MS';
+  margin-bottom: 10px;           /* Space bellow-Heading */
+  margin-top: 20px;       
+  color: #333;                 /* Heading-Color */
+  align-items: center;           /* Vertically-(Icon+Heading)-Center/Left */
+  gap: 8px;                      /* Icon & Heading-(Space-Horizontally)-I/D */
+
+}
+
+/* User Form-(Grid layout for inputs) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;    /* 2-Grid-(Column-based)-(User Form)-(1fr & 1fr)-(1fr-I/D)-(Grid-I/D) */
+  column-gap: 20px;                  /* Gap-Between-2-Column-(I/D) */
+  row-gap: 8px;                      /* Gap-Between-(2-Row/2-Entry Box)-(I/D) */
+  
+}
+
+/* User Form-Label-(On top of-Entry Box) */
+.form-cell label {
+  display: block;
+  margin-bottom: 5px;     /* Label Height-(On top of-Entry Box-I/D) */
+  font-family: 'Trebuchet MS';
+  font-size: 16px;
+  font-weight: bold;
+  color: #444;
+}
+
+/* User Form-(Entry Box) */
+.form-cell input,
+.form-cell textarea,
+.form-cell select {
+  width: 100%;
+  padding: 4px;                /* Entry Box-Height-I/D */
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;          /* In-Put-Box-Color Change */
+     
+}
+
+/* User Form-(Action Buttons)-(Save & Cancel) */
+.form-actions {
+   display: flex;
+  margin-top: 15px;    /* Space-(On top of)-(Save & Cancel-Button) */
+  gap: 10px;           /* Gap between-2-Buttons */
+
+}
+
+/* User Form-(Action Button-Save) */
+.btn.green {
+  display: flex;              /* enable flexbox */
+  background: #28a745;
+  color: white;
+  width: 64px;        /* example width */
+  height: 26px;        /* example height */
+  margin-top: -2px;    /* space above */
+  margin-bottom: -2px; /* space below */
+  border-radius: 4px;  /* rounded corners */
+  cursor: pointer;     /* pointer on hover */
+  font-size: 14px;     /* text size */
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+/* User Form-(Action Button-Cancel) */
+.btn.gray {
+  display: flex;              
+  background: #606366ff;
+  color: white;
+  width: 64px;        
+  height: 26px;        
+  margin-top: -2px;    
+  margin-bottom: -2px; 
+  border-radius: 4px;  
+  cursor: pointer;     
+  font-size: 14px;     
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+/* Filter Section */
+.filter-section h2 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-top: 30px;
+  margin-bottom: 10px;        /* Text-bellow-Heading-Up & Down */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section input[type="text"] {
+  padding: 11px 14px;             /* 11px-I/D-Filter Box-Height-Increase/Decrease */
+  border: 1px solid #cfd8e3;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 240px;           
+  height: 4px;           
+
+}
+
+.filter-section .btn.blue {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 64px;          
+  height: 28px;  
+  margin-top: -3px;       /* Above-Button, Height-I/D */
+  margin-bottom: 10px;    /* Bellow-Button, Height-I/D */
+  margin-left: 8px;
+  align-items: center;
+  font-family: 'Trebuchet MS';
+
+}
+
+/* Table with Action Buttons-(Edit & Delete) */
+.table-header {
+  margin-bottom: -2px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  
+}
+
+.table-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;    /* Bellow-Heading-Table-Up & Down */
+  margin-top: 8px; 
+
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 14px;
+  width: max-content;  
+}
+
+thead {
+  background-color: #f3f3f3;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  height: 35px;     /* Set desired row height */
+  
+}
+
+th {
+  font-weight: 600;
+  background-color: #0078d4;
+  color: white;
+  height: 26px;      /* Table-Header-Row Height-Increase/Decrease */
+  
+}
+
+td {
+  color: #444;
+  height: 22px;       /* Table-Row Height/Cell Height-Increase/Decrease */
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Only Action Buttons based-(Edit-btn yellow and Delete-btn red) */
+.btn.yellow {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: background-color 0.3s ease;
+  width: 56px;     /* Adjust as needed */
+  height: 8px;     /* Adjust as needed */
+  margin-bottom: 1px; 
+  
+}
+
+.btn.red {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  transition: background-color 0.3s ease;
+  width: 80px;     /* Delete Button-Width */
+  height: 24px;     /* Delete-Button-Height */
+  margin-bottom: 1px; 
+
+}
+
+.action-btn {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+}
+
+/* Paginator Section */
+.pagination-footer {
+  padding: 16px 20px;
+  margin-top: -10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #0078d4;
+  font-weight: 500;
+}
+.page-link {
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0078d4;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #cce4f7;
+}
+
+
+/* Layout */
+.content-flex {
+  display: flex;
+  gap: 2px;
+  height: 400px;
+
+  align-items: flex-start;
+  margin-top: 10px;        /* Whole container-(Table+Gantt)-Up--Down */
+}
+
+/* Table section */
+.table-section {
+  flex: 2;
+  min-width: 0;           /* allow flex child to shrink */
+  overflow-x: auto;       /* horizontal scrollbar */
+  overflow-y: auto;       /* vertical scrollbar */
+  border: none !important; 
+  max-width: 584px;        /* Table Container/Table Section-Increase/Decrease */
+
+}
+
+/* Force content wider than container */
+.table-section table {
+  min-width: 1000px;      /* Table-Minimum Width */
+}
+
+/* Gantt section */
+#gantt-panel {
+  flex: 1;
+  min-width: 0;            
+  max-width: 900px;        /* Gantt Panel/Gantt Section-Increase/Decrease */
+  overflow-x: auto;        /* horizontal scrollbar */
+  overflow-y: auto;        /* vertical scrollbar */
+  border: none !important; 
+}
+
+/* Gantt chart itself */
+#gantt-panel #gantt-ws {
+  width: max-content;      /* chart grows to fit content */
+  min-width: 1000px;       /* Gantt Chart-Increase/Decrease */
+  
+}
+
+.table-section,
+#gantt-panel {
+  flex: 1;
+  min-width: 0;
+  height: 100%;           /* fill parent height */
+  overflow-x: auto;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+}
+
+/* Whole Gantt chart up-down */
+#gantt-ws {
+  margin-top: 30px;  /* Whole Gantt Chart Up-Down */
+}
+
+/* Gantt chart header row height-Increase/Decrease */
+.gantt .grid-header {
+  height: 60px;       /* Increase header height */
+}
+
+/* Remove default hover highlight rectangles */
+.gantt .bar-wrapper:hover rect {
+  stroke: none !important;
+  fill: inherit !important; /* keep the original bar color */
+}
+
+
+
+#gantt-ws svg {
+  transform: scaleX(0.5);
+  transform-origin: left;
+}
+
+#gantt-ws text {
+  font-size: 14px;
+ 
+}
+
+</style>
+
+{% endblock %}
+
+
+

@@ -1,0 +1,1145 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Requisition Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+<!-- 🖨️ Print Preview Button -->
+{% if not readonly %}
+  <div class="print-controls">
+    <button type="button" class="print-button" onclick="printPreview()">🖨️ Print Preview</button>
+  </div>
+{% endif %}
+
+  <!-- Wrap all printable content -->
+  <div id="printable-section">
+
+    <!-- 🧾 Requisition Heading -->
+<div class="form-card-prh">
+  <h2 class="section-title-PR">
+    REQUISITION
+  </h2>
+</div>
+
+ <!-- 🧾 Basic Information Section -->
+{% if not readonly %}
+<section class="form-section-bi">
+  <header class="form" onclick="toggleFormBi()">
+    <h2>
+      <i class="fas fa-file-invoice-dollar"></i> BASIC INFORMATION
+      <span id="toggle-icon-bi">
+        <button id="toggle-btn-bi" class="btn-red"></button>
+      </span>
+    </h2>
+  </header>
+
+  <!-- Section Content -->
+  <div id="formContent-basic-information" class="form-content" style="display:none;">
+    <!-- Project Name -->
+    <div class="form-row">
+      <label for="project-name">Project Name:</label>
+      <select id="project-name" name="project_name_requisition"
+              style="width:512px; height:26px; background-color:#d3fdd3; border:1px solid #ccc; padding:0 6px; text-align:left;">
+        <option value="">--------- Select Project Name ---------</option>
+        {% for requisition in requisitions %}
+          <option value="{{ requisition.project_name_requisition }}">
+            {{ requisition.project_name_requisition }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Requisition Date -->
+    <div class="form-row">
+      <label for="requisition-date">Requisition Date:</label>
+      <select id="requisition-date" name="requisition_date"
+              style="width:512px; height:26px; background-color:#d3fdd3; border:1px solid #ccc; padding:0 6px; text-align:left;">
+        <option value="">--------- Select Requisition Date ---------</option>
+        {% for requisition in requisitions %}
+          <option value="{{ requisition.requisition_date|date:'d-m-Y' }}">
+            {{ requisition.requisition_date|date:'d-m-Y' }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Requisition Number -->
+    <div class="form-row">
+      <label for="requisition-no">Requisition No:</label>
+      <select id="requisition-no" name="requisition_no"
+              style="width:512px; height:26px; background-color:#d3fdd3; border:1px solid #ccc; padding:0 6px; text-align:left;">
+        <option value="">--------- Select Requisition Number ---------</option>
+        {% for requisition in requisitions %}
+          <option value="{{ requisition.requisition_no }}">
+            {{ requisition.requisition_no }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Delivery Date -->
+    <div class="form-row">
+      <label for="delivery-date">Delivery Date:</label>
+      <select id="delivery-date" name="delivery_date"
+              style="width:512px; height:26px; background-color:#d3fdd3; border:1px solid #ccc; padding:0 6px; text-align:left;">
+        <option value="">--------- Select Delivery Date ---------</option>
+        {% for requisition in requisitions %}
+          <option value="{{ requisition.delivery_date|date:'d-m-Y' }}">
+            {{ requisition.delivery_date|date:'d-m-Y' }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- 🔧 Toggle Script for Basic Information -->
+<script>
+  function toggleFormBi() {
+    const form = document.getElementById('formContent-basic-information');
+    const btn = document.getElementById('toggle-btn-bi');
+
+    if (form.style.display === 'none' || form.style.display === '') {
+      form.style.display = 'block';
+      btn.classList.remove('btn-red');
+      btn.classList.add('btn-blue');
+    } else {
+      form.style.display = 'none';
+      btn.classList.remove('btn-blue');
+      btn.classList.add('btn-red');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const mode = "{{ mode }}";
+    const form = document.getElementById('formContent-basic-information');
+    const btn = document.getElementById('toggle-btn-bi');
+
+    if (mode === "edit") {
+      form.style.display = 'block';
+      btn.classList.remove('btn-red');
+      btn.classList.add('btn-blue');
+    } else {
+      form.style.display = 'none';
+      btn.classList.remove('btn-blue');
+      btn.classList.add('btn-red');
+    }
+  });
+</script>
+
+<!-- 📝 Requisition Form Section -->
+{% if not readonly %}
+<section class="form-section">
+  <header class="form" onclick="toggleForm()">
+    <h2>
+      <i class="fas fa-file-invoice-dollar"></i> REQUISITION FORM
+<span id="toggle-icon">
+        <button id="toggle-btn" class="btn-red"></button>
+      </span>
+    </h2>
+  </header>
+
+  <div id="formContent" class="form-content">
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="form-grid">
+        <div class="form-cell">{{ form.project_name_requisition.label_tag }}{{ form.project_name_requisition }}</div>
+        <div class="form-cell">{{ form.requisition_date.label_tag }}{{ form.requisition_date }}</div>
+        <div class="form-cell">{{ form.requisition_no.label_tag }}{{ form.requisition_no }}</div>
+        <div class="form-cell">{{ form.resource_name_requisition.label_tag }}{{ form.resource_name_requisition }}</div>
+        <div class="form-cell">{{ form.resource_unit_requisition.label_tag }}{{ form.resource_unit_requisition }}</div>
+        <div class="form-cell">{{ form.quantity.label_tag }}{{ form.quantity }}</div>
+        <div class="form-cell">{{ form.delivery_date.label_tag }}{{ form.delivery_date }}</div>
+        <div class="form-cell">{{ form.remarks.label_tag }}{{ form.remarks }}</div>
+        <div class="form-cell">{{ form.status.label_tag }}{{ form.status }}</div>
+      </div>
+
+      <!-- Include Flatpickr -->
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+      <script>
+  flatpickr("#id_requisition_date", {
+      dateFormat: "d-m-Y",   // dd-mm-yyyy
+      allowInput: true,
+      defaultDate: null,     // don't auto-fill when editing
+      altInput: true,        // shows formatted date in box
+      altFormat: "d-m-Y",
+      clickOpens: true
+  });
+
+  flatpickr("#id_delivery_date", {
+      dateFormat: "d-m-Y",
+      allowInput: true,
+      defaultDate: null,
+      altInput: true,
+      altFormat: "d-m-Y",
+      clickOpens: true
+  });
+</script>
+
+      <div class="form-actions">
+        <button type="submit" class="btn green">
+          {% if mode == 'edit' %}Update{% else %}Save{% endif %}
+        </button>
+
+        {% if mode != 'list' %}
+          <a href="{% url 'requisition_dashboard' %}?q={{ query }}&project={{ project }}" class="btn gray">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<!-- 🔍 Filter/Search -->
+<section class="filter-section">
+  <h2>🔍 FILTERING</h2>
+  <form method="get" class="filter-form">
+    <div class="filter-row">
+      <!-- Project filter -->
+      <div class="filter-group">
+        <input type="text" name="project" value="{{ project|default:'' }}" placeholder="Search by Project Name">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+
+      <!-- Requisition No filter -->
+      <div class="filter-group">
+        <input type="text" name="requisition_no" value="{{ requisition_no|default:'' }}" placeholder="Search by Requisition No">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- 📋 Requisition List -->
+<section class="table-section">
+  <!-- Step-(A)-Header -->
+  <header class="table-header">
+    <h2><i class="fas fa-list"></i> REQUISITION LIST</h2>
+  </header>
+
+  <!-- Step-(B)-Table -->
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No</th>
+        <th>Project Name</th>
+        <th>Requisition Date</th>
+        <th>Requisition No</th>
+        <th>Resource Name</th>
+        <th>Unit</th>
+        <th>Quantity</th>
+        <th>Delivery Date</th>
+        <th>Remarks</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for requisition in requisitions %}
+        <tr>
+          <!-- Step-(B1)-Row Data -->
+          <td>{{ forloop.counter }}</td>
+          <td>{{ requisition.project_name_requisition.name_of_project }}</td>
+          <td>{{ requisition.requisition_date|date:"d-m-y" }}</td>
+          <td>{{ requisition.requisition_no }}</td>
+          <td>{{ requisition.resource_name_requisition }}</td>
+          <td>{{ requisition.resource_unit_requisition }}</td>
+          <td>{{ requisition.quantity }}</td>
+          <td>{{ requisition.delivery_date|date:"d-m-y" }}</td>
+          <td>{{ requisition.remarks }}</td>
+          <td>{{ requisition.status }}</td>
+          <td>
+            <!-- Step-(B2)-Team Actions -->
+            {% if not readonly and requisition.created_by == request.user %}
+              <a href="{% url 'edit_requisition' requisition.pk %}?q={{ query }}"
+                 class="btn yellow action-btn">
+                <i class="fas fa-edit"></i> Edit
+              </a>
+              <form method="post"
+                    action="{% url 'delete_requisition' requisition.pk %}?q={{ query }}"
+                    style="display:inline;">
+                {% csrf_token %}
+                <button type="submit"
+                        class="btn red action-btn"
+                        onclick="return confirm('Delete this Requisition?');">
+                  <i class="fas fa-trash-alt"></i> Delete
+                </button>
+              </form>
+
+                {% if not requisition.submitted_for_approval %}
+                  <a href="{% url 'submit_requisition_for_approval' requisition.pk %}"
+                     class="action-btn btn-submit"><i class="fas fa-paper-plane"></i> Submit</a>
+                {% endif %}
+              </div>
+            {% endif %}
+
+            <!-- Step-(B3)-Admin Actions-(Process-Approve/Reject/Pending) -->
+            {% if is_admin %}
+              <div class="admin-actions">
+                <a href="{% url 'update_requisition_status' requisition.pk %}?action=pending"
+                   class="action-button btn-pending"><i class="fas fa-hourglass-half"></i> Pending</a>
+                <a href="{% url 'update_requisition_status' requisition.pk %}?action=approve"
+                   class="action-button btn-approve"><i class="fas fa-check"></i> Approve</a>
+                <a href="{% url 'update_requisition_status' requisition.pk %}?action=reject"
+                   class="action-button btn-reject"><i class="fas fa-times"></i> Reject</a>
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <!-- Step-(B4)-No Data -->
+        <tr>
+          <td colspan="12" class="no-data">No Requisition records found.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Step-(C)-Footer -->
+  {% if not is_admin %}
+    <div class="table-footer">
+      <p class="footer-signature">Prepared By | Checked By | Approved By</p>
+    </div>
+  {% endif %}
+</section>
+
+</div> <!-- end printable-section -->
+</div> <!-- end dashboard-wrapper -->
+
+<!-- 📋 Pagination -->
+{% if requisitions.paginator.num_pages > 1 %}
+  <footer class="pagination-footer">
+    <nav class="pagination">
+      {% if requisitions.has_previous %}
+        <a href="?q={{ query }}&page={{ requisitions.previous_page_number }}" class="page-link">Previous</a>
+      {% endif %}
+      <span class="page-info">Page {{ requisitions.number }} of {{ requisitions.paginator.num_pages }}</span>
+      {% if requisitions.has_next %}
+        <a href="?q={{ query }}&page={{ requisitions.next_page_number }}" class="page-link">Next</a>
+      {% endif %}
+    </nav>
+  </footer>
+{% endif %}
+</section>
+
+</div>
+
+<!-- ✅ Auto-fill Script (Requisition Form) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const requisitionSelect = document.getElementById('id_resource_name_requisition');
+    const resourceUnitField = document.getElementById('id_resource_unit_requisition');
+
+    // Auto-fill resource unit
+    if (requisitionSelect) {
+      requisitionSelect.addEventListener('change', function () {
+        const resourceId = this.value;
+        if (!resourceId) return;
+
+        fetch(`/requisition/dashboard/get_requisition_details/${resourceId}/`)
+          .then(res => res.json())
+          .then(data => {
+            if (resourceUnitField) {
+              resourceUnitField.value = data.unit || '';
+              resourceUnitField.classList.add('autofilled');
+              setTimeout(() => resourceUnitField.classList.remove('autofilled'), 3000);
+            }
+          })
+          .catch(err => console.error("Auto-fill fetch error:", err));
+      });
+    }
+  });
+</script>
+
+<!-- 🔧 Toggle Script-(Form Section)-->
+<script>
+  function toggleForm() {
+    const form = document.getElementById('formContent');
+    const btn = document.getElementById('toggle-btn');
+
+    if (form.style.display === 'none' || form.style.display === '') {
+      // Show form
+      form.style.display = 'block';
+      // Switch button to blue
+      btn.classList.remove('btn-red');
+      btn.classList.add('btn-blue');
+    } else {
+      // Hide form
+      form.style.display = 'none';
+      // Switch button back to red
+      btn.classList.remove('btn-blue');
+      btn.classList.add('btn-red');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const mode = "{{ mode }}";
+    const form = document.getElementById('formContent');
+    const btn = document.getElementById('toggle-btn');
+
+    if (mode === "edit") {
+      form.style.display = 'block';
+      btn.classList.remove('btn-red');
+      btn.classList.add('btn-blue');
+    } else {
+      form.style.display = 'none';
+      btn.classList.remove('btn-blue');
+      btn.classList.add('btn-red');
+    }
+  });
+</script>
+
+
+<!-- 🧠 Print Preview Script -->
+<script>
+function printPreview() {
+  const section = document.querySelector('#printable-section');
+  if (!section) {
+    alert("Printable section not found!");
+    return;
+  }
+
+  // Clone section so we can safely modify without touching the original
+  const clone = section.cloneNode(true);
+
+  // Sync input values into the clone
+  const originalInputs = section.querySelectorAll('input');
+  const cloneInputs = clone.querySelectorAll('input');
+  originalInputs.forEach((input, idx) => {
+    if (cloneInputs[idx]) {
+      cloneInputs[idx].setAttribute('value', input.value);
+    }
+  });
+
+  // Sync textarea values into the clone
+  const originalTextareas = section.querySelectorAll('textarea');
+  const cloneTextareas = clone.querySelectorAll('textarea');
+  originalTextareas.forEach((textarea, idx) => {
+    if (cloneTextareas[idx]) {
+      const span = document.createElement('div');
+      span.textContent = textarea.value;
+      span.style.flex = "2";
+      span.style.border = "1px solid #333";
+      span.style.padding = "4px";
+      span.style.minHeight = "40px";
+      span.style.whiteSpace = "pre-wrap";
+      cloneTextareas[idx].parentNode.replaceChild(span, cloneTextareas[idx]);
+    }
+  });
+
+  // Sync select values into the clone
+  const originalSelects = section.querySelectorAll('select');
+  const cloneSelects = clone.querySelectorAll('select');
+  originalSelects.forEach((select, idx) => {
+    if (cloneSelects[idx]) {
+      const selectedOption = select.options[select.selectedIndex];
+      if (selectedOption) {
+        const span = document.createElement('span');
+        span.textContent = selectedOption.text;
+        span.style.flex = "2";
+        span.style.border = "1px solid #333";
+        span.style.padding = "4px";
+        cloneSelects[idx].parentNode.replaceChild(span, cloneSelects[idx]);
+      }
+    }
+  });
+
+  // Force Basic Information section content to be visible in the clone
+  const basicInfo = clone.querySelector('#formContent-basic-information');
+  if (basicInfo) {
+    basicInfo.style.display = 'block';
+  }
+
+  // ✅ Remove Actions and Status columns dynamically
+  clone.querySelectorAll('table').forEach(table => {
+    const headerCells = table.querySelectorAll('thead tr th');
+    let removeIndexes = [];
+
+    headerCells.forEach((th, idx) => {
+      const text = th.textContent.trim().toLowerCase();
+      if (text === 'actions' || text === 'status') {
+        removeIndexes.push(idx);
+      }
+    });
+
+    if (removeIndexes.length > 0) {
+      // Remove header cells
+      removeIndexes.sort((a, b) => b - a).forEach(idx => {
+        if (headerCells[idx]) headerCells[idx].remove();
+      });
+
+      // Remove body cells
+      table.querySelectorAll('tbody tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        removeIndexes.sort((a, b) => b - a).forEach(idx => {
+          if (cells[idx]) cells[idx].remove();
+        });
+      });
+    }
+  });
+
+  const content = clone.outerHTML;
+  const printWindow = window.open('', 'print-preview', 'width=900,height=700');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Print Preview</title>
+        <link rel="stylesheet" href="{% static 'css/print.css' %}">
+        <style>
+          /* Hide unnecessary sections */
+          .form-section, .filter-section { display: none !important; }
+          .action-btn, .print-controls { display: none !important; }
+
+          /* Table styling */
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #333; padding: 6px; }
+
+          /* Keep Requisition heading visible */
+          .section-title-PR { display: block !important; }
+
+          /* Hide Basic Information heading, but show its labels + values */
+          .form-card .section-title { display: none !important; }
+          #formContent-basic-information { display: block !important; }
+
+          /* Ensure labels and values are aligned left/right */
+          .form-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+          .form-row label { flex: 1; font-weight: bold; }
+          .form-row input, .form-row span, .form-row div {
+            flex: 2; border: 1px solid #333; padding: 4px;
+          }
+
+          /* Print override: remove borders from inputs */
+          @media print {
+            .form-row input, .form-row span, .form-row div {
+              border: none !important;
+              outline: none !important;
+              background: transparent !important;
+            }
+          }
+
+          /* Hide Requisition form heading */
+          .form-section header { display: none !important; }
+
+          /* Hide Requisition list heading */
+          .table-section .table-header { display: none !important; }
+
+          /* Footer styling */
+          .table-footer {
+            margin-top: 200px;
+            text-align: left;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      <body>
+        ${content}
+
+        <script>
+          window.onload = function() { setTimeout(() => window.print(), 200); };
+        <\/script>
+      </body>
+    </html>
+  `;
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+}
+</script>
+
+<!-- Custom CSS -->
+<style>
+.filter-row {
+  display: flex;
+  justify-content: flex-start; /* keep them side by side */
+  align-items: center;
+  gap: 20px; /* controls spacing between the two filters */
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px; /* spacing between input and button */
+}
+
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1000px;   
+  margin: auto;        
+  padding: 30px;    
+  
+}
+
+/* Main Heading title-(Resource Detailed) */
+.section-title-RS {
+  font-size: 20px;          /* heading size */
+  font-weight: bold;        /* make it stand out */
+  color: #0078d4;          /* dark slate color */
+  margin-top: 10px;         /* extra spacing above */
+  margin-bottom: 10px;      /* extra spacing below */
+  text-transform: uppercase; /* keep the title in caps */
+  letter-spacing: 1px;      /* add spacing between letters */
+}
+
+/* Whole User Form Section */
+.form-section {
+  background-color: #fdfdfd;       
+  padding: 25px 20px;          /* 25px-Up-Down & 20px-Move-Left/Right */        
+  border: 1px solid #fdfdfd;        
+  border-radius: 8px;              
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+  margin-bottom: 20px;
+  margin-left: -13px;
+
+}
+
+.form-section h2 {
+  font-size: 18px;
+  color: #0d0d0e;
+  margin-top: 2px;
+  margin-bottom: -8px;
+
+}
+
+.form-content {
+  background-color: #eef1f9 !important;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: -5px;
+  display: none; /* Keep hidden until toggled */
+  transition: all 0.3s ease;
+}
+
+/* Whole User Form Grid-(User From-Entry Box with Label) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 10px;       /* Vertically-Gap-Between-Entry Boxes-(2/3/4-Entry Boxes) with Label */
+  column-gap: 20px;    /* Horizontally-Gap-Between-Entry Box */
+  margin-bottom: 20px;  /* Entry-Box & Save Button-Gap-Increase/Decrease */   
+  
+}
+
+/* User Form Cell */
+.form-cell {
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.form-cell:hover {
+  background-color: #eef1f9   /* Same-Background Clolor-based on-Form Content-Color */
+}
+
+.form-cell label {
+  font-weight: 600;
+  margin-bottom: 6px;   /* Text on top of-Entry Box-Up & Down */
+  color: #333;
+  font-size: 16px;
+  background-color: #eef1f9  /* Same-Background Clolor-based on-Form Content-Color */
+
+}
+
+.form-cell input,
+.form-cell select,
+.form-cell textarea {
+  padding: 6px 10px;           /* 8px-Input/Entry Box-Height-Increase/Decrease */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fdfdfd; 
+  transition: border-color 0.3s ease;
+  color: #737171ff;    /* Text Color-In-Entry Box */
+}
+
+.form-cell input:focus,
+.form-cell select:focus,
+.form-cell textarea:focus {
+  border-color: #0078d4;
+  outline: none;
+}
+
+/* User Form Action Buttons-(Save & Cancel-Button) */
+/* Base Action button styling */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+/* Green button - Save */
+.btn.green {
+  display: flex;
+  background-color: #28a745;   /* Vibrant green */
+  color: #fff;                 /* White text */
+  margin-top: -5px;            /* Space above the button */
+  margin-left: 12px;           /* Space from the left */
+  width: 70px;                /* Fixed width for consistency */
+  height: 35px;                /* Comfortable height for clickability */
+  font-family: 'Trebuchet MS';  /* Clean, modern font */
+  font-size: 14px;             /* Readable size for enterprise UI */
+  border: none;                /* Remove default border */
+  border-radius: 4px;          /* Slight rounding for polish */
+  cursor: pointer;            /* Pointer on hover */
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+  align-items: center; 
+  text-align: center;
+  justify-content: center;
+
+}
+
+.btn.green:hover {
+  background-color: #218838;
+}
+
+/* Gray button-Cancel */
+.btn.gray {
+  display: flex;
+  background-color: #606366ff;   /* Vibrant green */
+  color: #fff;                 /* White text */
+  margin-top: -35px;            /* Space above the button */
+  margin-left: 97px;           /* Space from the left */
+  width: 30px;                /* Fixed width for consistency */
+  height: 15px;                /* Comfortable height for clickability */
+  font-family: 'Trebuchet MS';  /* Clean, modern font */
+  font-size: 14px;             /* Readable size for enterprise UI */
+  border: none;                /* Remove default border */
+  border-radius: 4px;          /* Slight rounding for polish */
+  cursor: pointer;            /* Pointer on hover */
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+  align-items: center; 
+  text-align: center;
+  justify-content: center;
+
+}
+
+.btn.gray:hover {
+  background-color: #606366ff;
+}
+
+/* Filter Section-(Search Box & Filter-Button) */
+/* Filter Section-Search Box */
+.filter-section {
+  background-color: #fdfdfd; 
+  border: 1px solid #fdfdfd; 
+  border-radius: 8px;
+  padding: 25px;         /* Filter Section-Search Box */
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-left: -13px;
+  
+}
+
+.filter-section h2 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-top: 5px;
+  margin-bottom: 10px;        /* Text-bellow-Heading-Up & Down */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filter-section input[type="text"] {
+  padding: 10px 14px;             /* 10px-Filter Box with Search Box-Height-Increase/Decrease */
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 240px;           /* Set desired width */
+  height: 10px;           /* Set desired height */
+
+}
+
+.filter-section input[type="text"]:focus {
+  border-color: #0078d4;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.filter-section .btn.blue {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 70px;          /* Adjust width as needed */
+  height: 33px;          /* Adjust height as needed */
+  margin-top: -1px;
+  align-items: center;
+  font-family: 'Trebuchet MS';
+
+}
+
+.filter-section .btn.blue:hover {
+  background-color: #005fa3;
+}
+
+/* Table Section with Action Buttons-(Edit & Delete) */
+/* Only Table Section based */
+.table-section {
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+  margin-left: -13px;
+  
+}
+
+.table-header {
+  margin-bottom: -2px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  
+}
+
+.table-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;    /* Bellow-Heading-Table-Up & Down */
+
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead {
+  background-color: #f3f3f3;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  height: 35px;     /* Set desired row height */
+  
+}
+
+th {
+  font-weight: 600;
+  background-color: #0078d4;
+  color: white;
+  height: 30px;      /* Table-Header-Row Height-Increase/Decrease */
+}
+
+td {
+  color: #444;
+  height: 32px;       /* Table-Row Height/Cell Height-Increase/Decrease */
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Only Action Buttons based-(Edit-btn yellow and Delete-btn red) */
+.btn.yellow {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: background-color 0.3s ease;
+  width: 50px;     /* Adjust as needed */
+  height: 10px;     /* Adjust as needed */
+
+}
+
+.btn.yellow:hover {
+  background-color: #e0a800;
+}
+
+.btn.red {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  transition: background-color 0.3s ease;
+  width: 78px;     /* Delete Button-Width */
+  height: 26px;     /* Delete-Button-Height */
+
+}
+
+.btn.red:hover {
+  background-color: #c82333;
+}
+
+.action-btn {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+}
+
+/* Paginator Section */
+.pagination-footer {
+  padding: 16px 20px;
+  margin-top: -10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #0078d4;
+  font-weight: 500;
+}
+.page-link {
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0078d4;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #cce4f7;
+}
+
+#formContent {
+  margin-top: 16px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: none; /* Hidden by default, toggled via JS */
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Base button style */
+#toggle-btn {
+  width: 27px;
+  height: 20px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  border-radius: 4px;
+  position: relative;          /* allows movement */
+}
+
+/* Red state */
+.btn-red {
+  background-color: red;
+  animation: moveLeft 0.5s ease forwards;
+}
+
+/* Blue state */
+.btn-blue {
+  background-color: #0078d4;
+  animation: moveLeft 0.5s ease forwards;
+}
+
+/* Purchase Requisition-(Heading-h2) */
+.section-title-PR {
+  font-size: 20px;        /* Adjust heading size */
+  font-weight: bold;      /* Make it stand out */
+  color: #0078d4;     /* Dark elegant color */
+  margin-bottom: 15px;    /* Space below heading */
+  margin-top: 10px;    /* Space below heading */
+
+}
+
+/* Basic Information-(Heading-h2) */
+.section-title {
+  font-size: 18px;   /* Adjust the size as needed */
+  margin-top: 15px;
+  margin-bottom: 8px;
+  color: #333; 
+
+}
+
+/* Basic Information-(Form Content) */
+#formContent-basic-information {
+  display: grid;
+  grid-template-columns: 512px 512px;  /* First column 600px, second column 400px */
+  column-gap: 10px;                   /* Gap between columns */
+  row-gap: 8px;                       /* Gap between rows */
+  
+}
+
+
+
+
+
+/* Basic Information-(Form-Row) */
+.form-row {
+  display: flex;
+  flex-direction: column; /* Label above select */
+}
+
+/* Basic Information-(Form-Row-Label) */
+.form-row label {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+/* Print Button */
+.print-button {
+  background-color: #4CAF50;   /* Green background */
+  color: white;                /* White text */
+  width: 120px;                /* Button width */
+  height: 28px;                /* Button height */
+  border: none;                /* Remove default border */
+  border-radius: 4px;          /* Rounded corners */
+  cursor: pointer;             /* Pointer on hover */
+  margin-top: 10px;
+
+}
+
+/* Process-Action Button-(Approve/Reject/Pending)-Based on-Admin */
+.admin-actions {
+  display: flex;              /* keeps buttons side by side */
+  gap:7px;                  /* spacing between buttons */
+  justify-content: center;    /* center them horizontally */
+}
+
+/* General button style */
+.action-button {
+  flex: 0 0 auto;             /* prevents flexbox from resizing */
+  box-sizing: border-box;     /* ensures width/height include padding/border */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  color: #fff;
+  border: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* Pending button */
+.action-button.btn-pending {
+  width: 90px;
+  height: 30px;
+  background-color: #f1c40f;  /* yellow */
+}
+.action-button.btn-pending:hover {
+  background-color: #d4ac0d;
+  transform: scale(1.05);
+}
+
+/* Approve button */
+.action-button.btn-approve {
+  width: 90px;
+  height: 30px;
+  background-color: #27ae60;  /* green */
+}
+.action-button.btn-approve:hover {
+  background-color: #1e8449;
+  transform: scale(1.05);
+}
+
+/* Reject button */
+.action-button.btn-reject {
+  width: 90px;
+  height: 30px;
+  background-color: #e74c3c;  /* red */
+}
+.action-button.btn-reject:hover {
+  background-color: #c0392b;
+  transform: scale(1.05);
+}
+
+/* Keyframes: move left then return */
+@keyframes moveLeft {
+  0%   { left: 0; }
+  50%  { left: -35px; }   /* shift left */
+  100% { left: 0; }       /* back to same position */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+
+}
+
+
+
+/* 🔹 Basic Information Toggle Button */
+#toggle-btn-bi {
+  width: 27px;
+  height: 20px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  border-radius: 4px;
+  position: relative;          /* allows movement */
+}
+
+
+</style>
+
+{% endblock %}

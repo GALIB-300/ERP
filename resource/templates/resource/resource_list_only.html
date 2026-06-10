@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="table-section">
+  <header class="table-header">
+    <h2><i class="fas fa-list"></i> TOTAL RESOURCES</h2>
+    <p>Total: {{ resources.paginator.count }}</p>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No</th>
+        <th>Resource Name</th>
+        <th>Unit</th>
+        <th>Resource Group</th>
+        <th>Created By</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for resource in resources %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ resource.name_of_resource }}</td>
+          <td>{{ resource.unit }}</td>
+          <td>{{ resource.get_resource_group_display }}</td>
+          <td>{{ resource.created_by }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="no-data">No resource records found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    {% if resources.has_previous %}
+      <a href="?page={{ resources.previous_page_number }}&q={{ query }}&name_of_resource={{ name_of_resource }}">Previous</a>
+    {% endif %}
+    <span>Page {{ resources.number }} of {{ resources.paginator.num_pages }}</span>
+    {% if resources.has_next %}
+      <a href="?page={{ resources.next_page_number }}&q={{ query }}&name_of_resource={{ name_of_resource }}">Next</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

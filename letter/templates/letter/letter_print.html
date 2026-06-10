@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Letter Print Preview{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🖨 Print Heading -->
+  <div class="form-card-po">
+    <h2 class="section-title-PO">
+      BILL LETTER
+    </h2>
+  </div>
+
+   <!-- 🖨️ Print Button -->
+  <div class="print-actions">
+    <button onclick="window.print()" class="btn green">🖨️ Print</button>
+  </div>
+
+  <!-- 📄 Letter Print Preview Template -->
+  {% for letter in letter_list %}
+  <section class="letter-print">
+    
+    <!-- Header Block -->
+    <div class="letter-header">
+      {% if letter.date %}<p><strong>Date:</strong> {{ letter.date|date:"d-m-Y" }}</p>{% endif %}
+      <p>To,</p>      
+    </div>
+
+    <!-- Recipient Block -->
+    <div class="letter-recipient">
+      <p>{{ letter.recipient_name }}</p>
+      <p>{{ letter.recipient_designation }}</p>
+      <p>{{ letter.recipient_address }}</p>
+    </div>
+
+    <!-- Subject -->
+    <div class="letter-subject">
+      <p><strong>{{ letter.subject }}</strong></p>
+    </div>
+
+    <!-- Salutation & Body -->
+    <div class="letter-body">
+      <p>{{ letter.recipient_salutation }}</p>
+      <p>{{ letter.body|linebreaks }}</p>
+    </div>
+
+    <!-- Sender Block -->
+    <div class="letter-sender">
+      <p>Sincerely,</p>
+      <p>{{ letter.sender_name }}</p>
+      <p>{{ letter.sender_designation }}</p>
+      <p>{{ letter.sender_company_name }}</p>
+    </div>
+
+  </section>
+  {% endfor %}
+
+</div>
+
+<!-- Custom CSS-(Print Section) -->
+<style>
+  @media print {
+    /* Hide sidebar/nav when printing */
+    .sidebar, .navbar, .nav-links-left {
+      display: none !important;
+    }
+
+    /* Shift all content to the left edge */
+    body, html {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+
+    .dashboard-wrapper {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      text-align: left !important;   /* force left alignment */
+    }
+
+    h2, div, table {
+      margin-left: 0 !important;
+      text-align: left !important;
+    }
+
+    table {
+      width: 100% !important;
+      border-collapse: collapse;
+    }
+
+    /* ✅ Footer signature block */
+    .table-footer {
+      margin-top: 80px;            /* Up-down-signature line */
+      text-align: center;
+      display: block !important;   /* ensure it shows in print */
+    }
+
+    .footer-signature {
+      font-weight: bold;
+      font-size: 14px;
+    }
+  }
+
+  /* Prevent wrapping text in table headers */
+  th {
+    white-space: nowrap;       /* Keep text on one line */
+    text-align: left;          /* Align neatly */
+    padding: 6px 10px;         /* Breathing room */
+  }
+
+
+@media print {
+  .print-actions {
+    display: none !important;
+  }
+}
+</style>
+
+{% endblock %}

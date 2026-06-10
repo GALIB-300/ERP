@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}PO Print Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🖨 Print Heading -->
+  <div class="form-card-po">
+    <h2 class="section-title-PO">
+      PURCHASE ORDER
+    </h2>
+  </div>
+
+  <!-- ✅ Header Layout -->
+  <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+    <!-- Left side: Company Info -->
+    <div style="width: 48%;">
+      {% if company %}
+        <div><strong>Company name:</strong> {{ company.company_name }}</div>
+        <div><strong>Company address:</strong> {{ company.company_address }}</div>
+        <div><strong>Company email:</strong> {{ company.company_email }}</div>
+        <div><strong>Company contact:</strong> {{ company.company_contact_no }}</div>
+      {% else %}
+        <div>No company record found.</div>
+      {% endif %}
+    </div>
+
+    <!-- Right side: PO Info -->
+    <div style="width: 48%;">
+      {% if po %}
+        <div><strong>Project name:</strong> {{ po.project_name_po.name_of_project }}</div>
+        <div><strong>Supplier name:</strong> {{ po.supplier_name_po.name_of_supplier }}</div>
+        <div><strong>PO date:</strong> {{ po.po_date|date:"d-m-Y" }}</div>
+        <div><strong>PO no:</strong> {{ po.po_no }}</div>
+      {% else %}
+        <div>No PO found for this department.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 📋 PO List -->
+  <section class="table-section">
+    <header class="table-header">
+      <h2><i class="fas fa-list"></i> PO List</h2>
+    </header>
+    <table border="1" cellspacing="0" cellpadding="5" style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Sl No</th>
+          <th>Project Name</th>
+          <th>PO Date</th>
+          <th>PO Number</th>
+          <th>Resource Name</th>
+          <th>Unit</th>
+          <th>Supplier Name</th>
+          <th>Quantity</th>
+          <th>Unit Price</th>
+          <th>Bill Amount</th>
+          <th>Delivery Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for po in po_list %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ po.project_name_po }}</td>
+          <td>{{ po.po_date|date:"d-m-Y" }}</td>
+          <td>{{ po.po_no }}</td>
+          <td>{{ po.resource_name_po }}</td>
+          <td>{{ po.resource_unit_po }}</td>
+          <td>{{ po.supplier_name_po }}</td>
+          <td>{{ po.quantity }}</td>
+          <td>{{ po.unit_price }}</td>
+          <td>{{ po.bill_amount }}</td>
+          <td>{{ po.delivery_date|date:"d-m-Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="11" class="no-data">No PO records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  <!-- Footer Layout -->
+  <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+    <!-- Left side: Supplier Terms & Condition Info -->
+    <div style="width: 48%;">
+      {% if stc %}
+        <div><strong>VAT and AIT:</strong> {{ stc.vat_ait_stc }}</div>
+        <div><strong>Delivery Term:</strong> {{ stc.delivery_term_stc }}</div>
+        <div><strong>Payment Term:</strong> {{ stc.payment_term_stc }}</div>
+        <div><strong>Warranty Term:</strong> {{ stc.warranty_term_stc }}</div>
+      {% else %}
+        <div>No stc record found.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ✅ Footer signature block -->
+    <div class="table-footer">
+      <p class="footer-signature">
+        Prepared By ____________ &nbsp;&nbsp; Checked By ____________ &nbsp;&nbsp; Approved By ____________
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  window.onload = function() {
+    window.print();
+  };
+
+  window.onafterprint = function() {
+    window.location.href = "{% url 'po_dashboard' %}";
+  };
+</script>
+
+<style>
+  @media print {
+    /* Hide sidebar/nav when printing */
+    .sidebar, .navbar, .nav-links-left {
+      display: none !important;
+    }
+
+    /* Shift all content to the left edge */
+    body, html {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+
+    .dashboard-wrapper {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      text-align: left !important;   /* force left alignment */
+    }
+
+    h2, div, table {
+      margin-left: 0 !important;
+      text-align: left !important;
+    }
+
+    table {
+      width: 100% !important;
+      border-collapse: collapse;
+    }
+
+    /* ✅ Footer signature block */
+    .table-footer {
+      margin-top: 80px;            /* Up-down-signature line */
+      text-align: center;
+      display: block !important;   /* ensure it shows in print */
+    }
+
+    .footer-signature {
+      font-weight: bold;
+      font-size: 14px;
+    }
+  }
+
+  /* Prevent wrapping text in table headers */
+  th {
+    white-space: nowrap;       /* Keep text on one line */
+    text-align: left;          /* Align neatly */
+    padding: 6px 10px;         /* Breathing room */
+  }
+</style>
+
+{% endblock %}

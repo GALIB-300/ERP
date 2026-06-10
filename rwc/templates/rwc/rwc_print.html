@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Requisition Print Preview{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- ERP-style Header Block -->
+    <table class="table mb-4" style="width:100%; border-collapse:collapse;">
+        <tr>
+            <td style="font-weight:bold; width:200px;">Company name:</td>
+            <td>{{ company.company_name }}</td>
+            <td style="font-weight:bold; width:200px;">Requisition date:</td>
+            <td>{{ rwc.requisition_date|date:"d-m-Y" }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight:bold;">Company address:</td>
+            <td>{{ company.company_address }}</td>
+            <td style="font-weight:bold;">Requisition no:</td>
+            <td>{{ rwc.requisition_no }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight:bold;">Company email:</td>
+            <td>{{ company.company_email }}</td>
+            <td style="font-weight:bold;">Project name:</td>
+            <td>{{ rwc.project_name_rwc }}</td>
+        </tr>
+        <tr>
+            <td style="font-weight:bold;">Company contact no:</td>
+            <td>{{ company.company_contact_no }}</td>
+            <td style="font-weight:bold;">Delivery date:</td>
+            <td>{{ rwc.delivery_date|date:"d-m-Y" }}</td>
+        </tr>
+    </table>
+
+    <!-- Rwc App List Table -->
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>PR Date</th>
+                <th>PR No</th>
+                <th>Project Name</th>
+                <th>Delivery Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in rwc_list %}
+            <tr>
+                <td>{{ item.requisition_date|date:"d-m-Y" }}</td>
+                <td>{{ item.requisition_no }}</td>
+                <td>{{ item.project_name_rwc }}</td>
+                <td>{{ item.delivery_date|date:"d-m-Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No requisitions found for this project.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Print Button -->
+    <div class="mt-3">
+        <button class="btn btn-primary" onclick="window.print()">Print</button>
+    </div>
+
+<script>
+    window.onload = function() {
+        window.print();
+    };
+</script>
+
+</div>
+{% endblock %}

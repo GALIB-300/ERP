@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Letter Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 🔍 Search Section-(Client Name + WO No + Bill No-Based) -->
+<section class="filter-section">
+  <h2>🔍 FILTERING</h2>
+  <form method="get" class="filter-form">
+    <div class="filter-row">
+      <div class="filter-group">
+        <input type="text" name="client_name_letter" value="{{ client_name_letter|default:'' }}" placeholder="Search by Client Name">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+      <div class="filter-group">
+        <input type="text" name="wo_no_letter" value="{{ wo_no_letter|default:'' }}" placeholder="Search by WO No">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+      <div class="filter-group">
+        <input type="text" name="bill_no_letter" value="{{ bill_no_letter|default:'' }}" placeholder="Search by Bill No">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- 🖨 Print Button -->
+<a href="{% url 'letter_print' %}?client_name_letter={{ client_name_letter }}&wo_no_letter={{ wo_no_letter }}&bill_no_letter={{ bill_no_letter }}" 
+   class="btn green" target="_blank">
+  <i class="fas fa-print"></i> Print
+</a>
+
+  <!-- 📋 Letter List -->
+<section class="table-section">
+  <header class="table-header">
+    <h2><i class="fas fa-list"></i> LETTER LIST</h2>
+    {% if not readonly %}
+      <a href="{% url 'letter_add' %}" class="btn green add-btn">
+        <i class="fas fa-plus"></i> Go to Form
+      </a>
+    {% endif %}
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No</th>
+        <th>Client Name</th>
+        <th>WO No</th>
+        <th>Bill No</th>
+        <th>Letter Date</th>
+        <th>Letter Recipient Name</th>
+        <th>Letter Recipient Designation</th>
+        <th>Letter Recipient Address</th>
+        <th>Subject of Letter</th>
+        <th>Letter Recipient Salutation</th>
+        <th>Body of Letter</th>
+        <th>Sender Name</th>
+        <th>Sender Designation</th>
+        <th>Sender Company Name</th>
+        <th>Remarks of Letter</th>
+        {% if not readonly %}
+          <th>Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for letter in letters %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ letter.client_name_letter.client_name_cba.client_name_ctv.client_name_pt }}</td>
+          <td>{{ letter.wo_no_letter.wo_no_cba.wo_no_ctv }}</td>
+          <td>{{ letter.bill_no_letter.bill_no_cba }}</td>
+          <td>{{ letter.date|date:"d-m-Y" }}</td>
+          <td>{{ letter.recipient_name }}</td>
+          <td>{{ letter.recipient_designation }}</td>
+          <td>{{ letter.recipient_address }}</td>
+          <td>{{ letter.subject }}</td>
+          <td>{{ letter.recipient_salutation }}</td>
+          <td>{{ letter.body|linebreaksbr }}</td>
+          <td>{{ letter.sender_name }}</td>
+          <td>{{ letter.sender_designation }}</td>
+          <td>{{ letter.sender_company_name }}</td>
+          <td>{{ letter.remarks }}</td>
+          {% if not readonly %}
+            <td>
+              {% if letter.created_by == request.user %}
+                <a href="{% url 'edit_letter' letter.pk %}?q={{ query }}" class="btn yellow action-btn">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+                <form method="post" action="{% url 'delete_letter' letter.pk %}?q={{ query }}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn red action-btn" onclick="return confirm('Delete this letter?');">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="16" class="no-data">No letter records found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+  <!-- 📋 Pagination -->
+  {% if letters.paginator.num_pages > 1 %}
+    <footer class="pagination-footer">
+      <nav class="pagination">
+        {% if letters.has_previous %}
+          <a href="?q={{ query }}&client_name_letter={{ client_name_letter }}&page={{ letters.previous_page_number }}" class="page-link">Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ letters.number }} of {{ letters.paginator.num_pages }}</span>
+        {% if letters.has_next %}
+          <a href="?q={{ query }}&client_name_letter={{ client_name_letter }}&page={{ letters.next_page_number }}" class="page-link">Next</a>
+        {% endif %}
+      </nav>
+    </footer>
+  {% endif %}
+</section>
+</div>
+
+<!-- Custom CSS-(Without-Form Section) -->
+<style>
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1200px;   
+  margin: auto;        
+  padding: 30px;  
+  
+}
+
+.filter-row {
+  display: flex;
+  justify-content: flex-start; /* keep them side by side */
+  align-items: center;
+  gap: 15px; /* controls spacing between the two filters */
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px; /* spacing between input and button */
+}
+
+/* Filter Section */
+.filter-section h2 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-top: 15px;
+  margin-bottom: 10px;        /* Text-bellow-Heading-Up & Down */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section input[type="text"] {
+  padding: 11px 14px;             /* 11px-I/D-Filter Box-Height-Increase/Decrease */
+  border: 1px solid #cfd8e3;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 240px;           
+  height: 4px;           
+
+}
+
+.filter-section .btn.blue {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 64px;          
+  height: 28px;  
+  margin-top: -1px;       /* Above-Button, Height-I/D */
+  margin-bottom: 10px;    /* Bellow-Button, Height-I/D */
+  margin-left: 8px;
+  align-items: center;
+  font-family: 'Trebuchet MS';
+
+}
+
+/* Table with Action Buttons-(Edit & Delete) */
+.table-header {
+  margin-bottom: -2px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  
+}
+
+.table-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;    /* Bellow-Heading-Table-Up & Down */
+  margin-top: 8px; 
+
+}
+
+table {
+  width: 140%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+thead {
+  background-color: #f3f3f3;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  height: 35px;     /* Set desired row height */
+  
+}
+
+th {
+  font-weight: 600;
+  background-color: #0078d4;
+  color: white;
+  height: 22px;      /* Table-Header-Row Height-Increase/Decrease */
+  white-space: nowrap;      /* Prevent-Table Header-Warp-Text */
+  
+}
+
+td {
+  color: #444;
+  height: 22px;       /* Table-Row Height/Cell Height-Increase/Decrease */
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Only Action Buttons based-(Edit-btn yellow and Delete-btn red) */
+.btn.yellow {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: background-color 0.3s ease;
+  width: 56px;     /* Adjust as needed */
+  height: 8px;     /* Adjust as needed */
+  margin-bottom: 1px; 
+  
+}
+
+.btn.red {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  transition: background-color 0.3s ease;
+  width: 80px;     /* Delete Button-Width */
+  height: 24px;     /* Delete-Button-Height */
+  margin-bottom: 1px; 
+
+}
+
+.action-btn {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+}
+
+/* Paginator Section */
+.pagination-footer {
+  padding: 16px 20px;
+  margin-top: -10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #0078d4;
+  font-weight: 500;
+}
+.page-link {
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0078d4;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #cce4f7;
+}
+
+</style>
+
+{% endblock %}
+
+

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>⚙️ Price Event Processing</h2>
+
+<div class="card">
+    <div class="card-header">📊 Price Event History (Daily Ranges)</div>
+    <div class="card-body">
+        <table class="table table-bordered table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th>Resource</th>
+                    <th>Supplier</th>
+                    <th>Base Price</th>
+                    <th>Increase/Decrease</th>
+                    <th>Actual Price</th>
+                    <th>Effective From</th>
+                    <th>Effective To</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td>{{ event.resource_name }}</td>
+                    <td>{{ event.supplier_name }}</td>
+                    <td>{{ event.base_price }}</td>
+                    <td>{{ event.increase_decrease_price }}</td>
+                    <td>{{ event.actual_price }}</td>
+                    <td>{{ event.effective_from|date:"M. d, Y" }}</td>
+                    <td>
+                        {% if event.effective_to %}
+                            {{ event.effective_to|date:"M. d, Y" }}
+                        {% else %}
+                            Ongoing
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7">No price events found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

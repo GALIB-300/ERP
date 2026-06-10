@@ -1,0 +1,526 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}CBA Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 🧾 CBA Heading -->
+  <div class="form-card-prh">
+    <h2 class="section-title-RS">
+      CONTRACT BILL AMOUNT DETAILED
+    </h2>
+  </div>
+
+  <!-- 📝 CBA Form Section -->
+{% if not is_admin %}
+<section class="form-section">
+  <h2>
+    <i class="fas fa-file-invoice-dollar"></i> CBA FORM
+  </h2>
+
+  <div id="formContent" class="form-content" style="display: block;">
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="form-grid">
+        <div class="form-cell">{{ form.client_name_cba.label_tag }}{{ form.client_name_cba }}</div>
+        <div class="form-cell">{{ form.project_id_cba.label_tag }}{{ form.project_id_cba }}</div>
+        <div class="form-cell">{{ form.wo_no_cba.label_tag }}{{ form.wo_no_cba }}</div>
+        <div class="form-cell">{{ form.bill_date_cba.label_tag }}{{ form.bill_date_cba }}</div>
+        <div class="form-cell">{{ form.bill_no_cba.label_tag }}{{ form.bill_no_cba }}</div>
+        <div class="form-cell">{{ form.bill_amount_cba.label_tag }}{{ form.bill_amount_cba }}</div>
+        <div class="form-cell">{{ form.vat_ait_cba.label_tag }}{{ form.vat_ait_cba }}</div>
+        <div class="form-cell">{{ form.vat_ait_amount_cba.label_tag }}{{ form.vat_ait_amount_cba }}</div>
+        <div class="form-cell">{{ form.actual_bill_amount_cba.label_tag }}{{ form.actual_bill_amount_cba }}</div>
+      </div>
+
+      <!-- Flatpickr setup -->
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+      <script>
+        flatpickr("#id_bill_date_cba", {
+            dateFormat: "d-m-Y",
+            allowInput: true,
+            altInput: true,
+            altFormat: "d-m-Y",
+            clickOpens: true
+        });
+      </script>
+
+      <div class="form-actions">
+        <button type="submit" class="btn green">
+          {% if mode == 'edit' %}Update{% else %}Save{% endif %}
+        </button>
+        {% if mode != 'list' %}
+          <a href="{% url 'cba_dashboard' %}" class="btn gray">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<!-- 🔍 Search Section-(Client Name + WO No + Bill No-Based) -->
+<section class="filter-section">
+  <h2>🔍 FILTERING</h2>
+  <form method="get" class="filter-form">
+
+    <!-- Filter row -->
+    <div class="filter-row">
+      
+      <!-- Client Name filter -->
+      <div class="filter-group">
+        <input type="text" name="client_name_cba" 
+               value="{{ client_name_cba|default:'' }}" 
+               placeholder="Search by Client Name">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+
+      <!-- WO No filter -->
+      <div class="filter-group">
+        <input type="text" name="wo_no_cba" 
+               value="{{ wo_no_cba|default:'' }}" 
+               placeholder="Search by WO No">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+
+      <!-- Bill No filter -->
+      <div class="filter-group">
+        <input type="text" name="bill_no_cba" 
+               value="{{ bill_no_cba|default:'' }}" 
+               placeholder="Search by Bill No">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+
+    </div>
+  </form>
+</section>
+
+<!-- 📋 CBA List -->
+<section class="table-section">
+  <header class="table-header">
+    <h2><i class="fas fa-list"></i> CBA LIST</h2>
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No</th>
+        <th>Client Name</th>
+        <th>Project ID</th>
+        <th>Work Order No</th>
+        <th>Bill Date</th>
+        <th>Bill No</th>
+        <th>Bill Amount</th> <!-- Column 7 -->
+        <th>VAT + AIT</th>   <!-- Column 8 -->
+        <th>VAT & AIT Amount</th> <!-- Column 9 -->
+        <th>Actual Bill Amount</th> <!-- Column 10 -->
+        {% if not readonly %}
+        <th>Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for cba in cbas %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ cba.client_name_cba.client_name_ctv.client_name_pt }}</td>
+          <td>{{ cba.client_name_cba.project_id_ctv }}</td>
+          <td>{{ cba.client_name_cba.wo_no_ctv }}</td>
+          <td>{{ cba.bill_date_cba|date:"d-m-Y" }}</td>
+          <td>{{ cba.bill_no_cba }}</td>
+          <td>{{ cba.bill_amount_cba }}</td>
+          <td>{{ cba.vat_ait_cba }}</td>
+          <td>{{ cba.vat_ait_amount_cba }}</td>
+          <td>{{ cba.actual_bill_amount_cba }}</td>
+          <td>
+            {% if not readonly %}
+              {% if cba.created_by == request.user %}
+                <a href="{% url 'edit_cba' cba.pk %}?q={{ query }}" class="btn yellow action-btn">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+                <form method="post" action="{% url 'delete_cba' cba.pk %}?q={{ query }}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn red action-btn" onclick="return confirm('Delete this record?');">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="11" class="no-data">No CBA records found.</td></tr>
+      {% endfor %}
+
+      <!-- Grand Total row-(7-Means Bill Amount, 9-Means VAT & AIT Amount, 10-Means Actual Bill Amount) -->
+      <tr>
+        <td colspan="6" class="text-right"><strong>Grand Total</strong></td>
+        <td><strong>{{ total_bill_amount_cba|floatformat:2 }}</strong></td> <!-- Column 7 -->
+        <td></td> <!-- Column 8 (VAT + AIT choice, left blank) -->
+        <td><strong>{{ total_vat_ait_amount_cba|floatformat:2 }}</strong></td> <!-- Column 9 -->
+        <td><strong>{{ total_actual_bill_amount_cba|floatformat:2 }}</strong></td> <!-- Column 10 -->
+        {% if not readonly %}<td></td>{% endif %}
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+  <!-- 📋 Pagination -->
+  {% if cbas.paginator.num_pages > 1 %}
+    <footer class="pagination-footer">
+      <nav class="pagination">
+        {% if cbas.has_previous %}
+          <a href="?q={{ query }}&page={{ cbas.previous_page_number }}" class="page-link">Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ cbas.number }} of {{ cbas.paginator.num_pages }}</span>
+        {% if cbas.has_next %}
+          <a href="?q={{ query }}&page={{ cbas.next_page_number }}" class="page-link">Next</a>
+        {% endif %}
+      </nav>
+    </footer>
+  {% endif %}
+</div>
+
+<!-- Auto-fill-Script-(Actual Bill Amount = Bill Amount − VAT & AIT Amount) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const billAmountInput = document.getElementById("id_bill_amount_cba");
+    const vatAitAmountInput = document.getElementById("id_vat_ait_amount_cba");
+    const actualBillAmountInput = document.getElementById("id_actual_bill_amount_cba");
+
+    function updateActualBillAmount() {
+        const billAmount = parseFloat(billAmountInput.value) || 0;
+        const vatAitAmount = parseFloat(vatAitAmountInput.value) || 0;
+        const actualValue = billAmount - vatAitAmount;
+        actualBillAmountInput.value = actualValue.toFixed(2);
+    }
+
+    billAmountInput.addEventListener("input", updateActualBillAmount);
+    vatAitAmountInput.addEventListener("input", updateActualBillAmount);
+});
+</script>
+
+<!-- Custom CSS-(Without-Form Section) -->
+<style>
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1200px;   
+  margin: auto;        
+  padding: 30px;  
+  
+}
+
+/* Main Heading title-(Project Detailed) */
+.section-title-RS {
+  font-size: 20px;          /* heading size */
+  font-weight: bold;        /* make it stand out */
+  color: #038ffa;          /* dark slate color */
+  margin-top: 10px;         /* extra spacing above */
+  margin-bottom: 10px;      /* extra spacing below */
+  text-transform: uppercase; /* keep the title in caps */
+  letter-spacing: 1px;      /* add spacing between letters */
+}
+
+/* User Form-Inner-Heading */
+.form-section h2 {
+  display: flex;                 /* Heading makes as flex container */
+  font-size: 18px;
+  font-family: 'Trebuchet MS';
+  margin-bottom: 10px;           /* Space bellow-Heading */
+  margin-top: 20px;       
+  color: #333;                 /* Heading-Color */
+  align-items: center;           /* Vertically-(Icon+Heading)-Center/Left */
+  gap: 8px;                      /* Icon & Heading-(Space-Horizontally)-I/D */
+
+}
+
+/* User Form-(Grid layout for inputs) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;    /* 2-Grid-(Column-based)-(User Form)-(1fr & 1fr)-(1fr-I/D)-(Grid-I/D) */
+  column-gap: 15px;                  /* Gap-Between-2-Column-(I/D) */
+  row-gap: 8px;                      /* Gap-Between-(2-Row/2-Entry Box)-(I/D) */
+  
+}
+
+/* User Form-Label-(On top of-Entry Box) */
+.form-cell label {
+  display: block;
+  margin-bottom: 5px;     /* Label Height-(On top of-Entry Box-I/D) */
+  font-family: 'Trebuchet MS';
+  font-size: 16px;
+  font-weight: bold;
+  color: #444;
+}
+
+/* User Form-(Entry Box) */
+.form-cell input,
+.form-cell textarea,
+.form-cell select {
+  width: 100%;
+  padding: 4px;                /* Entry Box-Height-I/D */
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;          /* In-Put-Box-Color Change */
+ box-sizing: border-box;
+     
+}
+
+/* User Form-(Action Buttons)-(Save & Cancel) */
+.form-actions {
+   display: flex;
+  margin-top: 15px;    /* Space-(On top of)-(Save & Cancel-Button) */
+  gap: 10px;           /* Gap between-2-Buttons */
+
+}
+
+/* User Form-(Action Button-Save) */
+.btn.green {
+  display: flex;              /* enable flexbox */
+  background: #28a745;
+  color: white;
+  width: 64px;        /* example width */
+  height: 26px;        /* example height */
+  margin-top: -2px;    /* space above */
+  margin-bottom: -2px; /* space below */
+  border-radius: 4px;  /* rounded corners */
+  cursor: pointer;     /* pointer on hover */
+  font-size: 14px;     /* text size */
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+/* User Form-(Action Button-Cancel) */
+.btn.gray {
+  display: flex;              
+  background: #606366ff;
+  color: white;
+  width: 64px;        
+  height: 26px;        
+  margin-top: -2px;    
+  margin-bottom: -2px; 
+  border-radius: 4px;  
+  cursor: pointer;     
+  font-size: 14px;     
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+.filter-row {
+  display: flex;
+  justify-content: flex-start; /* keep them side by side */
+  align-items: center;
+  gap: 20px; /* controls spacing between the two filters */
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px; /* spacing between input and button */
+}
+
+/* Filter Section */
+.filter-section h2 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-top: 20px;
+  margin-bottom: 10px;        /* Text-bellow-Heading-Up & Down */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section input[type="text"] {
+  padding: 11px 14px;             /* 11px-I/D-Filter Box-Height-Increase/Decrease */
+  border: 1px solid #cfd8e3;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 240px;           
+  height: 4px;           
+
+}
+
+.filter-section .btn.blue {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 64px;          
+  height: 28px;  
+  margin-top: -3px;       /* Above-Button, Height-I/D */
+  margin-bottom: 10px;    /* Bellow-Button, Height-I/D */
+  margin-left: 8px;
+  align-items: center;
+  font-family: 'Trebuchet MS';
+
+}
+
+/* Table with Action Buttons-(Edit & Delete) */
+.table-header {
+  margin-bottom: -2px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  
+}
+
+.table-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;    /* Bellow-Heading-Table-Up & Down */
+  margin-top: 8px; 
+
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+thead {
+  background-color: #f3f3f3;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  height: 35px;     /* Set desired row height */
+}
+
+th {
+  font-weight: 600;
+  background-color: #0078d4;
+  color: white;
+  height: 26px;          /* Table-Header-Row Height-Increase/Decrease */
+  white-space: nowrap;   /* Prevent-Table Header Warp-Text */
+ 
+}
+
+td {
+  color: #444;
+  height: 22px;       /* Table-Row Height/Cell Height-Increase/Decrease */
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Only Action Buttons based-(Edit-btn yellow and Delete-btn red) */
+.btn.yellow {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: background-color 0.3s ease;
+  width: 56px;     /* Adjust as needed */
+  height: 8px;     /* Adjust as needed */
+  margin-bottom: 1px; 
+  
+}
+
+.btn.red {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  transition: background-color 0.3s ease;
+  width: 80px;     /* Delete Button-Width */
+  height: 24px;     /* Delete-Button-Height */
+  margin-bottom: 1px; 
+
+}
+
+.action-btn {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+}
+
+/* Paginator Section */
+.pagination-footer {
+  padding: 16px 20px;
+  margin-top: -10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #0078d4;
+  font-weight: 500;
+}
+.page-link {
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0078d4;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #cce4f7;
+}
+
+</style>
+
+{% endblock %}

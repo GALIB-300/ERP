@@ -1,0 +1,571 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Customer Detailed Dashboard{% endblock %}
+{% block content %}
+
+<!-- 📦 Main Dashboard Container -->
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages Section -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 📝 Grid-Based Customer Form Section -->
+  <section class="form-section">
+    <header class="form" onclick="toggleForm()">
+      <h2><i class="fas fa-user-plus"></i> CUSTOMER FORM <span id="toggle-icon"><i class="fas fa-chevron-down"></i></span></h2>
+    </header>
+
+    <div id="formContent" class="form-content" style="display: block;">
+      <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <!-- Grid Layout -->
+        <div class="form-grid">
+          <div class="form-cell">{{ form.name.label_tag }}{{ form.name }}</div>
+          <div class="form-cell">{{ form.address.label_tag }}{{ form.address }}</div>
+          <div class="form-cell">{{ form.email.label_tag }}{{ form.email }}</div>
+          <div class="form-cell">{{ form.phone.label_tag }}{{ form.phone }}</div>
+          <div class="form-cell">{{ form.company.label_tag }}{{ form.company }}</div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="submit" class="btn green">
+            {% if mode == 'edit' %}Update{% else %}Save{% endif %}
+          </button>
+          {% if mode != 'list' %}
+            <a href="{% url 'customerdetailed_dashboard' %}?q={{ query }}" class="btn gray">Cancel</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- 🔍 Filter/Search Section -->
+  <section class="filter-section">
+    <h2>🔍 FILTERING</h2>
+    <form method="get">
+      <input type="text" name="q" value="{{ query }}" placeholder="Search by name, email, or company">
+      <button type="submit" class="btn blue">Filter</button>
+    </form>
+  </section>
+
+  <!-- 📋 Customer List Section -->
+  <section class="table-section">
+    <header class="table-header">
+      <h2><i class="fas fa-address-book"></i> CUSTOMER LIST</h2>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Address</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Company</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customerdetaileds %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.address }}</td>
+            <td>{{ customer.email }}</td>
+            <td>{{ customer.phone }}</td>
+            <td>{{ customer.company }}</td>
+            <td>
+              <a href="{% url 'edit_customerdetailed' customer.pk %}?q={{ query }}" class="btn yellow action-btn">
+                <i class="fas fa-edit"></i> Edit
+              </a>
+              <form method="post" action="{% url 'delete_customerdetailed' customer.pk %}?q={{ query }}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn red action-btn" onclick="return confirm('Delete this customer?');">
+                  <i class="fas fa-trash-alt"></i> Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="no-data">No customer records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 📋 Paginator Section -->
+  {% if customerdetaileds.paginator.num_pages > 1 %}
+    <footer class="pagination-footer">
+      <nav class="pagination">
+        {% if customerdetaileds.has_previous %}
+          <a href="?q={{ query }}&page={{ customerdetaileds.previous_page_number }}" class="page-link">Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ customerdetaileds.number }} of {{ customerdetaileds.paginator.num_pages }}</span>
+        {% if customerdetaileds.has_next %}
+          <a href="?q={{ query }}&page={{ customerdetaileds.next_page_number }}" class="page-link">Next</a>
+        {% endif %}
+      </nav>
+    </footer>
+  {% endif %}
+</div>
+<!-- 🔧 Toggle Script -->
+<script>
+  function toggleForm() {
+    const form = document.getElementById('formContent');
+    const icon = document.getElementById('toggle-icon').querySelector('i');
+
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+      icon.classList.remove('fa-chevron-down');
+      icon.classList.add('fa-chevron-up');
+    } else {
+      form.style.display = 'none';
+      icon.classList.remove('fa-chevron-up');
+      icon.classList.add('fa-chevron-down');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const mode = "{{ mode }}";
+    if (mode === "edit") {
+      const form = document.getElementById('formContent');
+      const icon = document.getElementById('toggle-icon').querySelector('i');
+      form.style.display = 'block';
+      icon.classList.remove('fa-chevron-down');
+      icon.classList.add('fa-chevron-up');
+    }
+  });
+</script>
+
+<!-- 🎨 Custom CSS -->
+<style>
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1000px;   
+  margin: auto;        
+  padding: 30px;    
+  
+}
+
+/* Whole User Form Section */
+.form-section {
+  background-color: #fdfdfd;       
+  padding: 25px 20px;          /* 25px-Up-Down & 20px-Move-Left/Right */        
+  border: 1px solid #fdfdfd;        
+  border-radius: 8px;              
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+  margin-bottom: 20px;
+  margin-left: -13px;
+
+}
+
+.form-section h2 {
+  font-size: 18px;
+  color: #0d0d0e;
+  margin-top: 2px;
+  margin-bottom: -8px;
+
+}
+
+.form-content {
+  background-color: #eef1f9 !important;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: -5px;
+  display: none; /* Keep hidden until toggled */
+  transition: all 0.3s ease;
+}
+
+/* Whole User Form Grid-(User From-Entry Box with Label) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 10px;       /* Vertically-Gap-Between-Entry Boxes-(2/3/4-Entry Boxes) with Label */
+  column-gap: 20px;    /* Horizontally-Gap-Between-Entry Box */
+  margin-bottom: 20px;  /* Entry-Box & Save Button-Gap-Increase/Decrease */   
+  
+}
+
+/* User Form Cell */
+.form-cell {
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.form-cell:hover {
+  background-color: #eef1f9   /* Same-Background Clolor-based on-Form Content-Color */
+}
+
+.form-cell label {
+  font-weight: 600;
+  margin-bottom: 6px;   /* Text on top of-Entry Box-Up & Down */
+  color: #333;
+  font-size: 16px;
+  background-color: #eef1f9  /* Same-Background Clolor-based on-Form Content-Color */
+
+}
+
+.form-cell input,
+.form-cell select,
+.form-cell textarea {
+  padding: 6px 10px;           /* 8px-Input/Entry Box-Height-Increase/Decrease */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fdfdfd; 
+  transition: border-color 0.3s ease;
+  color: #737171ff;    /* Text Color-In-Entry Box */
+}
+
+.form-cell input:focus,
+.form-cell select:focus,
+.form-cell textarea:focus {
+  border-color: #0078d4;
+  outline: none;
+}
+
+/* User Form Action Buttons-(Save & Cancel-Button) */
+/* Base Action button styling */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+/* Green button - Save */
+.btn.green {
+  display: flex;
+  background-color: #28a745;   /* Vibrant green */
+  color: #fff;                 /* White text */
+  margin-top: -5px;            /* Space above the button */
+  margin-left: 12px;           /* Space from the left */
+  width: 70px;                /* Fixed width for consistency */
+  height: 35px;                /* Comfortable height for clickability */
+  font-family: 'Trebuchet MS';  /* Clean, modern font */
+  font-size: 14px;             /* Readable size for enterprise UI */
+  border: none;                /* Remove default border */
+  border-radius: 4px;          /* Slight rounding for polish */
+  cursor: pointer;            /* Pointer on hover */
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+  align-items: center; 
+  text-align: center;
+  justify-content: center;
+
+}
+
+.btn.green:hover {
+  background-color: #218838;
+}
+
+/* Gray button-Cancel */
+.btn.gray {
+  display: flex;
+  background-color: #606366ff;   /* Vibrant green */
+  color: #fff;                 /* White text */
+  margin-top: -35px;            /* Space above the button */
+  margin-left: 97px;           /* Space from the left */
+  width: 30px;                /* Fixed width for consistency */
+  height: 15px;                /* Comfortable height for clickability */
+  font-family: 'Trebuchet MS';  /* Clean, modern font */
+  font-size: 14px;             /* Readable size for enterprise UI */
+  border: none;                /* Remove default border */
+  border-radius: 4px;          /* Slight rounding for polish */
+  cursor: pointer;            /* Pointer on hover */
+  transition: background-color 0.3s ease; /* Smooth hover effect */
+  align-items: center; 
+  text-align: center;
+  justify-content: center;
+
+}
+
+.btn.gray:hover {
+  background-color: #606366ff;
+}
+
+/* Filter Section-(Search Box & Filter-Button) */
+/* Filter Section-Search Box */
+.filter-section {
+  background-color: #fdfdfd; 
+  border: 1px solid #fdfdfd; 
+  border-radius: 8px;
+  padding: 25px;         /* Filter Section-Search Box */
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-left: -13px;
+  
+}
+
+.filter-section h2 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-top: 5px;
+  margin-bottom: 10px;        /* Text-bellow-Heading-Up & Down */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filter-section input[type="text"] {
+  padding: 10px 14px;             /* 10px-Filter Box with Search Box-Height-Increase/Decrease */
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 240px;           /* Set desired width */
+  height: 10px;           /* Set desired height */
+
+}
+
+.filter-section input[type="text"]:focus {
+  border-color: #0078d4;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+.filter-section .btn.blue {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 70px;          /* Adjust width as needed */
+  height: 33px;          /* Adjust height as needed */
+  margin-top: -1px;
+  align-items: center;
+  font-family: 'Trebuchet MS';
+
+}
+
+.filter-section .btn.blue:hover {
+  background-color: #005fa3;
+}
+
+/* Table Section with Action Buttons-(Edit & Delete) */
+/* Only Table Section based */
+.table-section {
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+  margin-left: -13px;
+  
+}
+
+.table-header {
+  margin-bottom: -2px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  
+}
+
+.table-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;    /* Bellow-Heading-Table-Up & Down */
+
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+thead {
+  background-color: #f3f3f3;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  height: 35px;     /* Set desired row height */
+  
+}
+
+th {
+  font-weight: 600;
+  background-color: #0078d4;
+  color: white;
+  height: 30px;      /* Table-Header-Row Height-Increase/Decrease */
+}
+
+td {
+  color: #444;
+  height: 32px;       /* Table-Row Height/Cell Height-Increase/Decrease */
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Only Action Buttons based-(Edit-btn yellow and Delete-btn red) */
+.btn.yellow {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: background-color 0.3s ease;
+  width: 57px;     /* Adjust as needed */
+  height: 12px;     /* Adjust as needed */
+
+}
+
+.btn.yellow:hover {
+  background-color: #e0a800;
+}
+
+.btn.red {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  transition: background-color 0.3s ease;
+  width: 85px;     /* Delete Button-Width */
+  height: 28px;     /* Delete-Button-Height */
+
+}
+
+.btn.red:hover {
+  background-color: #c82333;
+}
+
+.action-btn {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+}
+
+/* Paginator Section */
+.pagination-footer {
+  padding: 16px 20px;
+  margin-top: -10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #0078d4;
+  font-weight: 500;
+}
+.page-link {
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0078d4;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #cce4f7;
+}
+
+/* Toggle Button Container */
+#toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: #000000ff;
+  background-color: #ffffff;   /* Toggle Icon-Background Color */
+  padding: 8px 14px;
+  border: 1px solid #fbfcfdff;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+#toggle-icon:hover {
+  background-color: #ffffff;   /* Toggle Icon-Inside-Background Color */
+}
+
+#toggle-icon i {
+  font-size: 20px;   /* Toggle Icon-Increase/Decrease */
+  transition: transform 0.3s ease;
+}
+
+#formContent {
+  margin-top: 16px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: none; /* Hidden by default, toggled via JS */
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+{% endblock %}

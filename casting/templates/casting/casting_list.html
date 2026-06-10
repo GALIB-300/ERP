@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Casting Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 🔍 Filter/Search -->
+<section class="filter-section">
+  <h2>🔍 FILTERING</h2>
+  <form method="get" class="filter-form">
+    <div class="filter-row">
+      <!-- Project filter -->
+      <div class="filter-group">
+        <input type="text" name="project_name_casting" value="{{ project_name_casting|default:'' }}" placeholder="Search by Project Name">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+
+      <!-- Location filter -->
+      <div class="filter-group">
+        <input type="text" name="location" value="{{ location|default:'' }}" placeholder="Search by Location">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+
+  <!-- 📋 Casting Project List -->
+  <section class="table-section">
+    <header class="table-header">
+      <h2><i class="fas fa-list"></i> CASTING PROJECT LIST</h2>
+      {% if not readonly %}
+        <a href="{% url 'casting_add' %}" class="btn green add-btn">
+          <i class="fas fa-plus"></i> Add Project
+        </a>
+      {% endif %}
+    </header>
+    <table>
+      <thead>
+        <tr>
+          <th>Sl No</th>
+          <th>Project Name</th>
+          <th>Location</th>
+          <th>Component Name</th>
+          <th>Component ID</th>
+          <!-- Cylinder -->
+          <th>Radius-(cb)-(mm)</th>
+          <th>Height-(cb)-(mm)</th>
+          <th>Quantity-(cb)</th>
+          <!-- Square/Rectangle -->
+          <th>Length-(sb)-(mm)</th>
+          <th>Breadth-(sb)-(mm)</th>
+          <th>Height-(sb)-(mm)</th>
+          <th>Quantity-(sb)</th>
+          <!-- Triangle -->
+          <th>Base-(tb)-(mm)</th>
+          <th>Perpendicular-(tb)-(mm)</th>
+          <th>Height-(tb)-(mm)</th>
+          <th>Quantity-(tb)</th>
+          <!-- Trapezoid -->
+          <th>Length1-(trb)-(mm)</th>
+          <th>Length2-(trb)-(mm)</th>
+          <th>Breadth-(trb)-(mm)</th>
+          <th>Height-(trb)-(mm)</th>
+          <th>Quantity-(trb)</th>
+          <!-- Deduct Quantity -->
+          <th>Location-(dq)</th>
+          <th>Name-(dq)</th>
+          <th>ID-(dq)</th>
+          <th>Length-(dq)-(mm)</th>
+          <th>Breadth-(dq)-(mm)</th>
+          <th>Height-(dq)-(mm)</th>
+          <th>Quantity-(dq)</th>
+          <!-- Mix Design -->
+          <th>Type of Casting</th>
+          <th>Ratio Sum-A</th>
+          <th>Ratio Sum-B</th>
+          <th>Ratio Sum-C</th>
+          <th>Cement Design</th>
+          <th>Sylhet Sand Design</th>
+          <th>Local Sand Design</th>
+          <th>Stone 20mm Design</th>
+          <th>Stone 16mm Design</th>
+          <th>Stone 12mm Design</th>
+          <!-- Calculated -->
+          <th>Actual Quantity</th>
+          <th>Quantity with Dry Volume</th>
+          <th>Cement</th>
+          <th>Sylhet Sand</th>
+          <th>Local Sand</th>
+          <th>Stone 20mm</th>
+          <th>Stone 16mm</th>
+          <th>Stone 12mm</th>
+          {% if not readonly %}
+            <th>Actions</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for casting in castings %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ casting.project_name_casting }}</td>
+            <td>{{ casting.location }}</td>
+            <td>{{ casting.component_name }}</td>
+            <td>{{ casting.component_id }}</td>
+            <!-- Cylinder -->
+            <td>{{ casting.radius_cb_mm }}</td>
+            <td>{{ casting.height_cb_mm }}</td>
+            <td>{{ casting.number_cb }}</td>
+            <!-- Square/Rectangle -->
+            <td>{{ casting.length_sb_mm }}</td>
+            <td>{{ casting.breadth_sb_mm }}</td>
+            <td>{{ casting.height_sb_mm }}</td>
+            <td>{{ casting.number_sb }}</td>
+            <!-- Triangle -->
+            <td>{{ casting.base_tb_mm }}</td>
+            <td>{{ casting.perpendicular_tb_mm }}</td>
+            <td>{{ casting.height_tb_mm }}</td>
+            <td>{{ casting.number_tb }}</td>
+            <!-- Trapezoid -->
+            <td>{{ casting.length1_trb_mm }}</td>
+            <td>{{ casting.length2_trb_mm }}</td>
+            <td>{{ casting.breadth_trb_mm }}</td>
+            <td>{{ casting.height_trb_mm }}</td>
+            <td>{{ casting.number_trb }}</td>
+            <!-- Deduct Quantity -->
+            <td>{{ casting.location_dq }}</td>
+            <td>{{ casting.component_name_dq }}</td>
+            <td>{{ casting.component_id_dq }}</td>
+            <td>{{ casting.length_dq_mm }}</td>
+            <td>{{ casting.breadth_dq_mm }}</td>
+            <td>{{ casting.height_dq_mm }}</td>
+            <td>{{ casting.number_dq }}</td>
+            <!-- Mix Design -->
+            <td>{{ casting.type_casting }}</td>
+            <td>{{ casting.ratio_sum_a }}</td>
+            <td>{{ casting.ratio_sum_b }}</td>
+            <td>{{ casting.ratio_sum_c }}</td>
+            <td>{{ casting.cement_design }}</td>
+            <td>{{ casting.sylhet_sand_design }}</td>
+            <td>{{ casting.local_sand_design }}</td>
+            <td>{{ casting.stone_20mm_design }}</td>
+            <td>{{ casting.stone_16mm_design }}</td>
+            <td>{{ casting.stone_12mm_design }}</td>
+            <!-- Calculated -->
+            <td>{{ casting.actual_quantity }}</td>
+            <td>{{ casting.quantity_with_dry_volume }}</td>
+            <td>{{ casting.cement }}</td>
+            <td>{{ casting.sylhet_sand }}</td>
+            <td>{{ casting.local_sand }}</td>
+            <td>{{ casting.stone_20mm }}</td>
+            <td>{{ casting.stone_16mm }}</td>
+            <td>{{ casting.stone_12mm }}</td>
+            {% if not readonly %}
+              <td>
+                {% if casting.created_by == request.user %}
+                  <a href="{% url 'edit_casting' casting.pk %}?q={{ query }}" class="btn yellow action-btn">
+                    <i class="fas fa-edit"></i> Edit
+                  </a>
+                  <form method="post" action="{% url 'delete_casting' casting.pk %}?q={{ query }}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn red action-btn" onclick="return confirm('Delete this project?');">
+                      <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
+            {% endif %}
+          </tr>
+        {% empty %}
+          <tr><td colspan="50" class="no-data">No Casting project records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 📋 Pagination -->
+  {% if castings.paginator.num_pages > 1 %}
+    <footer class="pagination-footer">
+      <nav class="pagination">
+        {% if castings.has_previous %}
+          <a href="?q={{ query }}&project_name_casting={{ project_name_casting }}&page={{ castings.previous_page_number }}" class="page-link">Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ castings.number }} of {{ castings.paginator.num_pages }}</span>
+        {% if castings.has_next %}
+          <a href="?q={{ query }}&project_name_casting={{ project_name_casting }}&page={{ castings.next_page_number }}" class="page-link">Next</a>
+        {% endif %}
+      </nav>
+    </footer>
+  {% endif %}
+</section>
+</div>
+{% endblock %}
+
+

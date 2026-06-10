@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Letter Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 🧾 Letter Heading -->
+  <div class="form-card-prh d-flex justify-content-between align-items-center">
+    <h2 class="section-title-LH">
+      LETTER DETAILED
+    </h2>
+    
+  <!-- 🖨 Print Button -->
+<a href="{% url 'letter_print' %}?client_name_letter={{ client_name_letter }}&wo_no_letter={{ wo_no_letter }}&bill_no_letter={{ bill_no_letter }}" 
+   class="btn green" target="_blank">
+  <i class="fas fa-print"></i> Print
+</a>
+
+  <!-- 📝 Letter Form Section -->
+  {% if not is_admin %}
+  <section class="form-section">
+    <h2>
+      <i class="fas fa-envelope"></i>
+      {% if mode == 'edit' %} EDIT LETTER {% else %} LETTER FORM {% endif %}
+      
+    </h2>
+
+    <div id="formContent" class="form-content" style="display: block;">
+      <form method="post" autocomplete="off">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="form-grid">
+          <div class="form-cell">{{ form.client_name_letter.label_tag }}{{ form.client_name_letter }}</div>
+          <div class="form-cell">{{ form.wo_no_letter.label_tag }}{{ form.wo_no_letter }}</div>
+          <div class="form-cell">{{ form.bill_no_letter.label_tag }}{{ form.bill_no_letter }}</div>
+          <div class="form-cell">{{ form.date.label_tag }}{{ form.date }}</div>
+        </div>
+        
+        <!-- Flatpickr setup -->
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+      <script>
+        flatpickr("#id_date", {
+            dateFormat: "d-m-Y",
+            allowInput: true,
+            altInput: true,
+            altFormat: "d-m-Y",
+            clickOpens: true
+        });
+      </script>
+
+        <div class="form-grid">
+          <div class="form-cell">{{ form.recipient_name.label_tag }}{{ form.recipient_name }}</div>
+          <div class="form-cell">{{ form.recipient_designation.label_tag }}{{ form.recipient_designation }}</div>
+          <div class="form-cell">{{ form.recipient_address.label_tag }}{{ form.recipient_address }}</div>
+          <div class="form-cell">{{ form.subject.label_tag }}{{ form.subject }}</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-cell">{{ form.recipient_salutation.label_tag }}{{ form.recipient_salutation }}</div>
+          <div class="form-cell">{{ form.body.label_tag }}{{ form.body }}</div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-cell">{{ form.sender_name.label_tag }}{{ form.sender_name }}</div>
+          <div class="form-cell">{{ form.sender_designation.label_tag }}{{ form.sender_designation }}</div>
+          <div class="form-cell">{{ form.sender_company_name.label_tag }}{{ form.sender_company_name }}</div>
+          <div class="form-cell">{{ form.remarks.label_tag }}{{ form.remarks }}</div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn green">
+            {% if mode == 'edit' %} Update {% else %} Save {% endif %}
+          </button>
+          {% if mode != 'list' %}
+            <a href="{% url 'letter_list' %}" class="btn gray">Cancel</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<!-- Custom CSS-(Without-Form Section) -->
+<style>
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1200px;   
+  margin: auto;        
+  padding: 30px;  
+  
+}
+
+/* Main Heading title-(Project Detailed) */
+.section-title-LH {
+  font-size: 20px;          /* heading size */
+  font-weight: bold;        /* make it stand out */
+  color: #038ffa;          /* dark slate color */
+  margin-top: -5px;         /* extra spacing above */
+  margin-bottom: 10px;      /* extra spacing below */
+  text-transform: uppercase; /* keep the title in caps */
+  letter-spacing: 1px;      /* add spacing between letters */
+}
+
+/* User Form-Inner-Heading */
+.form-section h2 {
+  display: flex;                 /* Heading makes as flex container */
+  font-size: 18px;
+  font-family: 'Trebuchet MS';
+  margin-bottom: 10px;           /* Space bellow-Heading */
+  margin-top: 20px;       
+  color: #333;                 /* Heading-Color */
+  align-items: center;           /* Vertically-(Icon+Heading)-Center/Left */
+  gap: 8px;                      /* Icon & Heading-(Space-Horizontally)-I/D */
+
+}
+
+/* User Form-(Grid layout for inputs) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;    /* 2-Grid-(Column-based)-(User Form)-(1fr & 1fr)-(1fr-I/D)-(Grid-I/D) */
+  column-gap: 20px;                  /* Gap-Between-2-Column-(I/D) */
+  row-gap: 8px;                      /* Gap-Between-(2-Row/2-Entry Box)-(I/D) */
+  
+}
+
+/* User Form-Label-(On top of-Entry Box) */
+.form-cell label {
+  display: block;
+  margin-bottom: 5px;     /* Label Height-(On top of-Entry Box-I/D) */
+  font-family: 'Trebuchet MS';
+  font-size: 16px;
+  font-weight: bold;
+  color: #444;
+}
+
+/* User Form-(Entry Box) */
+.form-cell input,
+.form-cell textarea,
+.form-cell select {
+  width: 100%;
+  padding: 4px;                /* Entry Box-Height-I/D */
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;          /* In-Put-Box-Color Change */
+     
+}
+
+/* User Form-(Action Buttons)-(Save & Cancel) */
+.form-actions {
+   display: flex;
+  margin-top: 15px;    /* Space-(On top of)-(Save & Cancel-Button) */
+  gap: 10px;           /* Gap between-2-Buttons */
+
+}
+
+/* User Form-(Action Button-Save) */
+.btn.green {
+  display: flex;              /* enable flexbox */
+  background: #28a745;
+  color: white;
+  width: 64px;        /* example width */
+  height: 26px;        /* example height */
+  margin-top: -2px;    /* space above */
+  margin-bottom: -2px; /* space below */
+  border-radius: 4px;  /* rounded corners */
+  cursor: pointer;     /* pointer on hover */
+  font-size: 14px;     /* text size */
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+/* User Form-(Action Button-Cancel) */
+.btn.gray {
+  display: flex;              
+  background: #606366ff;
+  color: white;
+  width: 64px;        
+  height: 26px;        
+  margin-top: -2px;    
+  margin-bottom: -2px; 
+  border-radius: 4px;  
+  cursor: pointer;     
+  font-size: 14px;     
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+</style>
+
+{% endblock %}
+
+
+

@@ -1,0 +1,643 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}SB Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 🧾 SB Heading -->
+  <div class="form-card-prh">
+    <h2 class="section-title-RS">
+      SUPPLIER BILL DETAILED
+    </h2>
+  </div>
+
+  <!-- 📝 SB Form Section -->
+{% if not is_admin %}
+<section class="form-section">
+  <h2>
+    <i class="fas fa-file-invoice-dollar"></i> SB FORM
+  </h2>
+
+  <div id="formContent" class="form-content" style="display: block;">
+    <form method="post" autocomplete="off">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="form-grid">
+        <div class="form-cell">{{ form.project_name_sb.label_tag }}{{ form.project_name_sb }}</div>
+        <div class="form-cell">{{ form.po_number_sb.label_tag }}{{ form.po_number_sb }}</div>
+        <div class="form-cell">{{ form.resource_name_sb.label_tag }}{{ form.resource_name_sb }}</div>
+        <div class="form-cell">{{ form.resource_unit_sb.label_tag }}{{ form.resource_unit_sb }}</div>
+        <div class="form-cell">{{ form.supplier_name_sb.label_tag }}{{ form.supplier_name_sb }}</div>
+        <div class="form-cell">{{ form.po_quantity_sb.label_tag }}{{ form.po_quantity_sb }}</div>
+        <div class="form-cell">{{ form.unit_price_sb.label_tag }}{{ form.unit_price_sb }}</div>
+        <div class="form-cell">{{ form.receive_date_sb.label_tag }}{{ form.receive_date_sb }}</div>
+        <div class="form-cell">{{ form.actual_receive_quantity_sb.label_tag }}{{ form.actual_receive_quantity_sb }}</div>
+        <div class="form-cell">{{ form.bill_amount_sb.label_tag }}{{ form.bill_amount_sb }}</div>
+      </div>
+
+      <!-- Flatpickr setup -->
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+      <script>
+        flatpickr("#id_receive_date_sb", {
+            dateFormat: "d-m-Y",
+            allowInput: true,
+            altInput: true,
+            altFormat: "d-m-Y",
+            clickOpens: true
+        });
+      </script>
+
+      <div class="form-actions">
+        <button type="submit" class="btn green">
+          {% if mode == 'edit' %}Update{% else %}Save{% endif %}
+        </button>
+        {% if mode != 'list' %}
+          <a href="{% url 'sb_dashboard' %}" class="btn gray">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<!-- 🔍 Search Section-(Project, Supplier & PO Number Based) -->
+<section class="filter-section">
+  <h2>🔍 FILTERING</h2>
+  <form method="get" class="filter-form">
+
+    <div class="filter-row">
+      <!-- Project Name filter -->
+      <div class="filter-group">
+        <input type="text" name="project_name_sb" 
+               value="{{ project_name_sb|default:'' }}" 
+               placeholder="Search by Project Name">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+
+      <!-- Supplier Name filter -->
+      <div class="filter-group">
+        <input type="text" name="supplier_name_sb" 
+               value="{{ supplier_name_sb|default:'' }}" 
+               placeholder="Search by Supplier Name">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+
+      <!-- PO Number filter -->
+      <div class="filter-group">
+        <input type="text" name="po_number_sb" 
+               value="{{ po_number_sb|default:'' }}" 
+               placeholder="Search by PO Number">
+        <button type="submit" class="btn blue">Filter</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+<!-- 📋 SB List -->
+<section class="table-section">
+  <header class="table-header">
+    <h2><i class="fas fa-list"></i> SB LIST</h2>
+  </header>
+  <table>
+    <thead>
+      <tr>
+        <th>Sl No</th>
+        <th>Project Name</th>
+        <th>PO Number</th>
+        <th>Resource Name</th>
+        <th>Unit</th>
+        <th>Supplier Name</th>
+        <th>PO Quantity</th>
+        <th>Unit Price</th>
+        <th>Receive Date</th>
+        <th>Actual Receive Quantity</th>
+        <th>Bill Amount</th>
+        {% if not readonly %}
+        <th>Actions</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for sb in sbs %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ sb.project_name_sb.project_name_po.name_of_project }}</td>
+          <td>{{ sb.po_number_sb.po_no }}</td>
+          <td>{{ sb.resource_name_sb.resource_name_po }}</td>
+          <td>{{ sb.resource_unit_sb }}</td>
+          <td>{{ sb.supplier_name_sb.supplier_name_po.name_of_supplier }}</td>
+          <td>{{ sb.po_quantity_sb }}</td>
+          <td>{{ sb.unit_price_sb }}</td>
+          <td>{{ sb.receive_date_sb|date:"d-m-Y" }}</td>
+          <td>{{ sb.actual_receive_quantity_sb }}</td>
+          <td>{{ sb.bill_amount_sb }}</td>
+          <td>
+            {% if not readonly %}
+              {% if sb.created_by == request.user %}
+                <a href="{% url 'edit_sb' sb.pk %}?q={{ query }}" class="btn yellow action-btn">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+                <form method="post" action="{% url 'delete_sb' sb.pk %}?q={{ query }}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn red action-btn" onclick="return confirm('Delete this record?');">
+                    <i class="fas fa-trash-alt"></i> Delete
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="12" class="no-data">No SB records found.</td></tr>
+      {% endfor %}
+
+      <!-- Grand Total row -->
+      <tr>
+        <td colspan="10" class="text-right"><strong>Grand Total</strong></td>
+        <td><strong>{{ total_bill_amount_sb|floatformat:2 }}</strong></td>
+        {% if not readonly %}<td></td>{% endif %}
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+  <!-- 📋 Pagination -->
+  {% if sbs.paginator.num_pages > 1 %}
+    <footer class="pagination-footer">
+      <nav class="pagination">
+        {% if sbs.has_previous %}
+          <a href="?q={{ query }}&page={{ sbs.previous_page_number }}" class="page-link">Previous</a>
+        {% endif %}
+        <span class="page-info">Page {{ sbs.number }} of {{ sbs.paginator.num_pages }}</span>
+        {% if sbs.has_next %}
+          <a href="?q={{ query }}&page={{ sbs.next_page_number }}" class="page-link">Next</a>
+        {% endif %}
+      </nav>
+    </footer>
+  {% endif %}
+</div>
+
+<!-- ✅ Script for-Auto-fill-Unit-(Pull from-po-app) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const resourceSelect = document.getElementById('id_resource_name_sb');   // SB form dropdown
+    const resourceUnitField = document.getElementById('id_resource_unit_sb'); // SB unit field
+
+    if (resourceSelect) {
+      resourceSelect.addEventListener('change', function () {
+        const resourceId = this.value;
+
+        // ✅ If placeholder selected, clear the field and stop
+        if (!resourceId) {
+          if (resourceUnitField) {
+            resourceUnitField.value = '';
+          }
+          return;
+        }
+
+        // ✅ Otherwise fetch unit from API (Po app)
+        fetch(`/sb/dashboard/get_sb_unit/${resourceId}/`)
+          .then(res => res.json())
+          .then(data => {
+            if (resourceUnitField) {
+              resourceUnitField.value = data.resource_unit_po || '';
+              resourceUnitField.classList.add('autofilled');
+              setTimeout(() => resourceUnitField.classList.remove('autofilled'), 3000);
+            }
+          })
+          .catch(err => console.error("Auto-fill fetch error:", err));
+      });
+    }
+  });
+</script>
+
+<!-- 📦 Script for Auto-fill Quantity (Pull from Po app with 4 filters) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Declare all relevant form elements
+    const projectSelect   = document.getElementById('id_project_name_sb');
+    const ponumberSelect  = document.getElementById('id_po_number_sb');
+    const resourceSelect  = document.getElementById('id_resource_name_sb');
+    const supplierSelect  = document.getElementById('id_supplier_name_sb');
+    const quantityField   = document.getElementById('id_po_quantity_sb'); // ✅ corrected field name
+
+    function fetchPoQuantity() {
+      const projectId  = projectSelect?.value;
+      const poId       = ponumberSelect?.value;
+      const resourceId = resourceSelect?.value;
+      const supplierId = supplierSelect?.value;
+
+      // Require all four dropdowns
+      if (!projectId || !poId || !resourceId || !supplierId) {
+        if (quantityField) quantityField.value = '';
+        return;
+      }
+
+      // Fetch quantity from Po app
+      fetch(`/sb/dashboard/get_sb_quantity/?project_id=${projectId}&po_id=${poId}&resource_id=${resourceId}&supplier_id=${supplierId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (quantityField) {
+            quantityField.value = data.quantity !== null ? data.quantity : '';
+            quantityField.classList.add('autofilled');
+            setTimeout(() => quantityField.classList.remove('autofilled'), 3000);
+          }
+        })
+        .catch(err => console.error("Auto-fill Quantity error:", err));
+    }
+
+    // Attach listeners to all dropdowns
+    projectSelect?.addEventListener('change', fetchPoQuantity);
+    ponumberSelect?.addEventListener('change', fetchPoQuantity);
+    resourceSelect?.addEventListener('change', fetchPoQuantity);
+    supplierSelect?.addEventListener('change', fetchPoQuantity);
+  });
+</script>
+
+<!-- 💰 Script for-Auto-fill-Price-(Pull from-po-app) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const projectSelect   = document.getElementById('id_project_name_sb');
+    const ponumberSelect  = document.getElementById('id_po_number_sb');
+    const resourceSelect  = document.getElementById('id_resource_name_sb');
+    const supplierSelect  = document.getElementById('id_supplier_name_sb');
+    const priceField      = document.getElementById('id_unit_price_sb');
+
+    function fetchPoPrice() {
+      const projectId  = projectSelect?.value;
+      const poId       = ponumberSelect?.value;
+      const resourceId = resourceSelect?.value;
+      const supplierId = supplierSelect?.value;
+
+      // Require all four dropdowns
+      if (!projectId || !poId || !resourceId || !supplierId) {
+        if (priceField) priceField.value = '';
+        return;
+      }
+
+      // Fetch unit price from Po app
+      fetch(`/sb/dashboard/get_sb_price/?project_id=${projectId}&po_id=${poId}&resource_id=${resourceId}&supplier_id=${supplierId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (priceField) {
+            priceField.value = data.unit_price !== null ? data.unit_price : '';
+            priceField.classList.add('autofilled');
+            setTimeout(() => priceField.classList.remove('autofilled'), 3000);
+          }
+        })
+        .catch(err => console.error("Auto-fill Price error:", err));
+    }
+
+    // Attach listeners to all dropdowns
+    projectSelect?.addEventListener('change', fetchPoPrice);
+    ponumberSelect?.addEventListener('change', fetchPoPrice);
+    resourceSelect?.addEventListener('change', fetchPoPrice);
+    supplierSelect?.addEventListener('change', fetchPoPrice);
+  });
+</script>
+
+<!-- ✅ Auto Calculation Script-(bill_amount_sb) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const qtyInput = document.getElementById("id_actual_receive_quantity_sb");
+    const priceInput = document.getElementById("id_unit_price_sb");
+    const totalInput = document.getElementById("id_bill_amount_sb");
+
+    function updateTotal() {
+      const qty = parseFloat(qtyInput.value) || 0;
+      const price = parseFloat(priceInput.value) || 0;
+      totalInput.value = (qty * price).toFixed(2);
+    }
+
+    if (qtyInput && priceInput && totalInput) {
+      qtyInput.addEventListener("input", updateTotal);
+      priceInput.addEventListener("input", updateTotal);
+    }
+  });
+</script>
+
+<!-- Custom CSS-(Without-Form Section) -->
+<style>
+/* Global Style-Whole Body Container */
+  body {
+    font-family: 'Trebuchet MS';
+    background-color: #f4f6f9;
+    color: #333;
+  }
+
+/* Whole Page Container */
+.whole-page {
+  max-width: 1200px;   
+  margin: auto;        
+  padding: 30px;  
+  
+}
+
+/* Main Heading title-(Project Detailed) */
+.section-title-RS {
+  font-size: 20px;          /* heading size */
+  font-weight: bold;        /* make it stand out */
+  color: #038ffa;          /* dark slate color */
+  margin-top: 10px;         /* extra spacing above */
+  margin-bottom: 10px;      /* extra spacing below */
+  text-transform: uppercase; /* keep the title in caps */
+  letter-spacing: 1px;      /* add spacing between letters */
+}
+
+/* User Form-Inner-Heading */
+.form-section h2 {
+  display: flex;                 /* Heading makes as flex container */
+  font-size: 18px;
+  font-family: 'Trebuchet MS';
+  margin-bottom: 10px;           /* Space bellow-Heading */
+  margin-top: 20px;       
+  color: #333;                 /* Heading-Color */
+  align-items: center;           /* Vertically-(Icon+Heading)-Center/Left */
+  gap: 8px;                      /* Icon & Heading-(Space-Horizontally)-I/D */
+
+}
+
+/* User Form-(Grid layout for inputs) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;    /* 2-Grid-(Column-based)-(User Form)-(1fr & 1fr)-(1fr-I/D)-(Grid-I/D) */
+  column-gap: 15px;                  /* Gap-Between-2-Column-(I/D) */
+  row-gap: 8px;                      /* Gap-Between-(2-Row/2-Entry Box)-(I/D) */
+  
+}
+
+/* User Form-Label-(On top of-Entry Box) */
+.form-cell label {
+  display: block;
+  margin-bottom: 5px;     /* Label Height-(On top of-Entry Box-I/D) */
+  font-family: 'Trebuchet MS';
+  font-size: 16px;
+  font-weight: bold;
+  color: #444;
+}
+
+/* User Form-(Entry Box) */
+.form-cell input,
+.form-cell textarea,
+.form-cell select {
+  width: 100%;
+  padding: 4px;                /* Entry Box-Height-I/D */
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;          /* In-Put-Box-Color Change */
+  box-sizing: border-box;
+     
+}
+
+/* User Form-(Action Buttons)-(Save & Cancel) */
+.form-actions {
+   display: flex;
+  margin-top: 15px;    /* Space-(On top of)-(Save & Cancel-Button) */
+  gap: 10px;           /* Gap between-2-Buttons */
+
+}
+
+/* User Form-(Action Button-Save) */
+.btn.green {
+  display: flex;              /* enable flexbox */
+  background: #28a745;
+  color: white;
+  width: 64px;        /* example width */
+  height: 26px;        /* example height */
+  margin-top: -2px;    /* space above */
+  margin-bottom: -2px; /* space below */
+  border-radius: 4px;  /* rounded corners */
+  cursor: pointer;     /* pointer on hover */
+  font-size: 14px;     /* text size */
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+/* User Form-(Action Button-Cancel) */
+.btn.gray {
+  display: flex;              
+  background: #606366ff;
+  color: white;
+  width: 64px;        
+  height: 26px;        
+  margin-top: -2px;    
+  margin-bottom: -2px; 
+  border-radius: 4px;  
+  cursor: pointer;     
+  font-size: 14px;     
+  font-family: 'Trebuchet MS';
+  border: none;
+  text-decoration: none;
+  align-items: center;        /* Vertical-Centering */
+  justify-content: center;    /* Horizontal-Centering */
+
+}
+
+.filter-row {
+  display: flex;
+  justify-content: flex-start; /* keep them side by side */
+  align-items: center;
+  gap: 20px; /* controls spacing between the two filters */
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px; /* spacing between input and button */
+}
+
+/* Filter Section */
+.filter-section h2 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-top: 20px;
+  margin-bottom: 10px;        /* Text-bellow-Heading-Up & Down */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-section input[type="text"] {
+  padding: 11px 14px;             /* 11px-I/D-Filter Box-Height-Increase/Decrease */
+  border: 1px solid #cfd8e3;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+  width: 240px;           
+  height: 4px;           
+
+}
+
+.filter-section .btn.blue {
+  background-color: #0078d4;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 64px;          
+  height: 28px;  
+  margin-top: -3px;       /* Above-Button, Height-I/D */
+  margin-bottom: 10px;    /* Bellow-Button, Height-I/D */
+  margin-left: 8px;
+  align-items: center;
+  font-family: 'Trebuchet MS';
+
+}
+
+/* Table with Action Buttons-(Edit & Delete) */
+.table-header {
+  margin-bottom: -2px;
+  padding-bottom: 8px;
+  font-size: 18px;
+  
+}
+
+.table-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;    /* Bellow-Heading-Table-Up & Down */
+  margin-top: 8px; 
+
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+thead {
+  background-color: #f3f3f3;
+}
+
+th, td {
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  height: 35px;     /* Set desired row height */
+}
+
+th {
+  font-weight: 600;
+  background-color: #0078d4;
+  color: white;
+  height: 26px;          /* Table-Header-Row Height-Increase/Decrease */
+  white-space: nowrap;   /* Prevent-Table Header Warp-Text */
+ 
+}
+
+td {
+  color: #444;
+  height: 22px;       /* Table-Row Height/Cell Height-Increase/Decrease */
+}
+
+.no-data {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Only Action Buttons based-(Edit-btn yellow and Delete-btn red) */
+.btn.yellow {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #ffc107;
+  color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: background-color 0.3s ease;
+  width: 56px;     /* Adjust as needed */
+  height: 8px;     /* Adjust as needed */
+  margin-bottom: 1px; 
+  
+}
+
+.btn.red {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+  transition: background-color 0.3s ease;
+  width: 80px;     /* Delete Button-Width */
+  height: 24px;     /* Delete-Button-Height */
+  margin-bottom: 1px; 
+
+}
+
+.action-btn {
+  margin-right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  
+}
+
+/* Paginator Section */
+.pagination-footer {
+  padding: 16px 20px;
+  margin-top: -10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.page-info {
+  font-size: 14px;
+  color: #0078d4;
+  font-weight: 500;
+}
+.page-link {
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0078d4;
+  border-radius: 4px;
+  text-decoration: none;
+  margin-left: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.page-link:hover {
+  background-color: #cce4f7;
+}
+
+</style>
+
+{% endblock %}

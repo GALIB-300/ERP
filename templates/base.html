@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ERP System{% endblock %}</title>
+
+  <!-- Frappe Gantt -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.5.0/frappe-gantt.min.js"></script>
+
+  <!-- Global styles -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Department-specific stylesheet -->
+  {% if request.user.is_authenticated %}
+    {% with request.user.profile.department|default:"default"|lower as dept %}
+      <link rel="stylesheet" href="{% static 'css/'|add:dept|add:'/'|add:dept|add:'.css' %}">
+    {% endwith %}
+  {% else %}
+    <link rel="stylesheet" href="{% static 'css/default.css' %}">
+  {% endif %}
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4f6f8;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #3c4b64;
+      color: white;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      overflow-y: auto;
+      transition: width 0.3s ease;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      text-align: left;
+      background-color: #3c4b64;
+      margin-top: 25px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: -10px 0 0 0;
+    }
+
+    .sidebar-menu li {
+      padding: 7px 20px;
+      cursor: pointer;
+    }
+
+    .sidebar-menu a {
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-menu a:hover {
+      background-color: #465577;
+      border-radius: 4px;
+    }
+
+    .dropdown-menu {
+      list-style: none;
+      padding-left: 20px;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    .dropdown-menu li {
+      padding: 4px 0;
+    }
+
+    .main-content {
+      margin-left: 240px;
+      padding: 30px;
+      flex-grow: 1;
+    }
+
+    .toggle-icon {
+      margin-left: auto;
+    }
+
+    .active > .dropdown-menu {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">ERP SOLUTION</div>
+  <ul class="sidebar-menu">
+
+    <!-- 🏠 Always show Home -->
+    <li class="nav-item">
+      <a href="{% url 'home' %}">
+        <span><i class="fas fa-home"></i> Home</span>
+      </a>
+    </li>
+
+    {% if 'salesmarketing' in user_departments %}
+    <!-- 📣 Sales & Marketing -->
+    <li class="dropdown">
+      <a class="dropdown-toggle" href="#" role="button">
+        <span><i class="fas fa-bullhorn"></i> Sales & Marketing</span>
+        <i class="fa fa-chevron-down toggle-icon"></i>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a href="{% url 'customerdetailed_dashboard' %}?department=salesmarketing">Customer Detailed</a></li>
+
+        <li><a href="{% url 'resource_dashboard' %}?department=salesmarketing">Resource Detailed</a></li>
+
+        <li><a href="{% url 'supplier_process' %}?department=construction">Supplier List</a></li>
+
+        <li><a href="{% url 'proposal_dashboard' %}?department=salesmarketing">Proposal</a></li>
+
+        <li><a href="{% url 'pfp_dashboard' %}?department=salesmarketing">Front Page</a></li>
+
+        <li><a href="{% url 'resource_list_only' %}?department=construction">Resource List</a></li>
+        <li><a href="{% url 'client_dashboard' %}?department=salesmarketing">Client Detailed</a></li>
+        <li><a href="{% url 'pt_dashboard' %}?department=salesmarketing">Proposal Track</a></li>
+        <li><a href="{% url 'ctv_dashboard' %}?department=salesmarketing">Contract Value</a></li>
+        <li><a href="{% url 'cba_dashboard' %}?department=salesmarketing">Client Bill</a></li>
+        
+        <li><a href="{% url 'letter_list' %}?department=construction">Bill Letter</a></li>
+
+      </ul>
+    </li>
+    {% endif %}
+
+    {% if 'construction' in user_departments %}
+    <!-- 🏗️ Construction -->
+    <li class="dropdown">
+      <a class="dropdown-toggle" href="#" role="button">
+        <span><i class="fas fa-hard-hat"></i> Construction</span>
+        <i class="fa fa-chevron-down toggle-icon"></i>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a href="{% url 'project_dashboard' %}?department=construction">Project Detailed</a></li>
+        <li><a href="{% url 'resource_dashboard' %}?department=construction">Resource Detailed</a></li>
+        <li><a href="{% url 'supplier_dashboard' %}?department=construction">Supplier Detailed</a></li>
+        <li><a href="{% url 'po_dashboard' %}?department=construction">Purchase Order</a></li>
+        <li><a href="{% url 'requisition_dashboard' %}?department=construction">Purchase Requisition</a></li>
+        <li><a href="{% url 'casting_list' %}?department=construction">Estimate Casting</a></li>
+
+        <li><a href="{% url 'ws_list' %}?department=construction">Work Schedule</a></li>
+        <li><a href="{% url 'price_event_dashboard' %}?department=construction">Resource Price</a></li>
+        <li><a href="{% url 'price_event_process' %}?department=construction">Whole Price</a></li>
+        <li><a href="{% url 'rbp_dashboard' %}?department=construction">Resource Base Rate</a></li>
+        <li><a href="{% url 'rip_dashboard' %}?department=construction">Actual Resource Price</a></li>
+        <li><a href="{% url 'company_dashboard' %}?department=construction">Company Detail</a></li>
+        <li><a href="{% url 'rwc_dashboard' %}?department=construction">PR With Company</a></li>
+
+        <li><a href="{% url 'pr_dashboard' %}?department=construction">Requisition</a></li>
+        <li><a href="{% url 'stc_dashboard' %}?department=construction">Supplier Terms</a></li>
+
+        <li><a href="{% url 'supplier_process' %}?department=construction">Supplier List</a></li>
+        <li><a href="{% url 'client_dashboard' %}?department=construction">Client Detailed</a></li>
+        <li><a href="{% url 'sb_dashboard' %}?department=construction" style="color:white;">Supplier Bill</a></li>
+        
+      </ul>
+    </li>
+    {% endif %}
+
+  </ul>
+</div>
+
+<div class="main-content">
+  {% block content %}{% endblock %}
+</div>
+
+<script>
+  document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+    toggle.addEventListener('click', e => {
+      e.preventDefault();
+      const parent = toggle.parentElement;
+      parent.classList.toggle('active');
+    });
+  });
+</script>
+
+</body>
+</html>

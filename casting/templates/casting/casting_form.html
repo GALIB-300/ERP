@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Casting Dashboard{% endblock %}
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- 🔔 Flash Messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert-box {{ message.tags }}">
+        {{ message }}
+        <button class="close-btn" onclick="this.parentElement.style.display='none';">×</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- 📝 Casting Form Section -->
+  {% if not is_admin %}
+  <section class="form-section">
+    <h2>
+      <i class="fas fa-project-diagram"></i>
+      {% if mode == 'edit' %} EDIT CASTING PROJECT {% else %} ADD CASTING PROJECT {% endif %}
+      <span id="toggle-icon">
+        <button id="toggle-btn" class="btn btn-danger"></button>
+      </span>
+    </h2>
+
+    <div id="formContent" class="form-content" style="display: block;">
+      <form method="post" autocomplete="off">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.project_name_casting.label_tag }} {{ form.project_name_casting}}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.location.label_tag }} {{ form.location }}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.component_name.label_tag }} {{ form.component_name }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.component_id.label_tag }} {{ form.component_id }}
+          </div>
+        </div>
+
+        <!-- Cylindrical -->
+        <h4>Cylindrical</h4>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            {{ form.radius_cb_mm.label_tag }} {{ form.radius_cb_mm }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.height_cb_mm.label_tag }} {{ form.height_cb_mm }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.number_cb.label_tag }} {{ form.number_cb }}
+          </div>
+        </div>
+
+        <!-- Square/Rectangle -->
+        <h4>Square / Rectangle</h4>
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            {{ form.length_sb_mm.label_tag }} {{ form.length_sb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.breadth_sb_mm.label_tag }} {{ form.breadth_sb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.height_sb_mm.label_tag }} {{ form.height_sb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.number_sb.label_tag }} {{ form.number_sb }}
+          </div>
+        </div>
+
+        <!-- Triangle -->
+        <h4>Triangle</h4>
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            {{ form.base_tb_mm.label_tag }} {{ form.base_tb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.perpendicular_tb_mm.label_tag }} {{ form.perpendicular_tb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.height_tb_mm.label_tag }} {{ form.height_tb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.number_tb.label_tag }} {{ form.number_tb }}
+          </div>
+        </div>
+
+        <!-- Trapezoid -->
+        <h4>Trapezoid</h4>
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            {{ form.length1_trb_mm.label_tag }} {{ form.length1_trb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.length2_trb_mm.label_tag }} {{ form.length2_trb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.breadth_trb_mm.label_tag }} {{ form.breadth_trb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.height_trb_mm.label_tag }} {{ form.height_trb_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.number_trb.label_tag }} {{ form.number_trb }}
+          </div>
+        </div>
+
+        <!-- Deduct Quantity -->
+        <h4>Deduct Quantity</h4>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            {{ form.location_dq.label_tag }} {{ form.location_dq }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.component_name_dq.label_tag }} {{ form.component_name_dq }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.component_id_dq.label_tag }} {{ form.component_id_dq }}
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            {{ form.length_dq_mm.label_tag }} {{ form.length_dq_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.breadth_dq_mm.label_tag }} {{ form.breadth_dq_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.height_dq_mm.label_tag }} {{ form.height_dq_mm }}
+          </div>
+          <div class="col-md-3 mb-3">
+            {{ form.number_dq.label_tag }} {{ form.number_dq }}
+          </div>
+        </div>
+
+        <!-- Mix Design -->
+        <h4>Mix Design</h4>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            {{ form.type_casting.label_tag }} {{ form.type_casting }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.ratio_sum_a.label_tag }} {{ form.ratio_sum_a }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.ratio_sum_b.label_tag }} {{ form.ratio_sum_b }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.ratio_sum_c.label_tag }} {{ form.ratio_sum_c }}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            {{ form.cement_design.label_tag }} {{ form.cement_design }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.sylhet_sand_design.label_tag }} {{ form.sylhet_sand_design }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.local_sand_design.label_tag }} {{ form.local_sand_design }}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            {{ form.stone_20mm_design.label_tag }} {{ form.stone_20mm_design }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.stone_16mm_design.label_tag }} {{ form.stone_16mm_design }}
+          </div>
+          <div class="col-md-4 mb-3">
+            {{ form.stone_12mm_design.label_tag }} {{ form.stone_12mm_design }}
+          </div>
+        </div>
+
+        <div class="form-actions mt-4">
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i>
+            {% if mode == 'edit' %} Update {% else %} Save {% endif %}
+          </button>
+          {% if mode != 'list' %}
+            <a href="{% url 'casting_list' %}" class="btn btn-secondary">
+              <i class="fas fa-times"></i> Cancel
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+{% endblock %}

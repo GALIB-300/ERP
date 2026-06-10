@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📦 Supplier Processing</h2>
+
+<div class="card">
+    <div class="card-header">📋 Supplier List (Filtered)</div>
+    <div class="card-body">
+        <!-- 🔍 Filter Info -->
+        {% if query or name_of_supplier %}
+            <p>
+                <strong>Applied Filters:</strong>
+                {% if query %} Search = "{{ query }}" {% endif %}
+                {% if name_of_supplier %} | Supplier = "{{ name_of_supplier }}" {% endif %}
+            </p>
+        {% endif %}
+
+        <!-- 📊 Supplier Table -->
+        <table class="table table-bordered table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th>Sl No</th>
+                    <th>Supplier Name</th>
+                    <th>Contact Person</th>
+                    <th>Address</th>
+                    <th>Contact Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ supplier.name_of_supplier }}</td>
+                    <td>{{ supplier.supplier_contact_person }}</td>
+                    <td>{{ supplier.supplier_address }}</td>
+                    <td>{{ supplier.supplier_contact_number }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="no-data">No supplier records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- 📑 Pagination -->
+        {% if suppliers.paginator.num_pages > 1 %}
+        <nav class="pagination">
+            {% if suppliers.has_previous %}
+                <a href="?q={{ query }}&name_of_supplier={{ name_of_supplier }}&page={{ suppliers.previous_page_number }}" class="page-link">Previous</a>
+            {% endif %}
+            <span class="page-info">Page {{ suppliers.number }} of {{ suppliers.paginator.num_pages }}</span>
+            {% if suppliers.has_next %}
+                <a href="?q={{ query }}&name_of_supplier={{ name_of_supplier }}&page={{ suppliers.next_page_number }}" class="page-link">Next</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
