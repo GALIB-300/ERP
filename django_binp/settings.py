@@ -1,17 +1,18 @@
 """
 Django settings for belal_erp project.
-Updated for Render deployment with SQLite (local dev)
+Updated for Render deployment with PostgreSQL (production) and SQLite (local dev fallback)
 """
 
 from pathlib import Path
 import os
+import dj_database_url   # ✅ Added for DATABASE_URL parsing
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ✅ Security: use environment variables
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-default")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "asif-web-app.onrender.com,erp-mm0g.onrender.com,localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "asif-web-app.onrender.com,localhost,127.0.0.1").split(",")
 
 # Application definition
 INSTALLED_APPS = [
@@ -83,12 +84,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_binp.wsgi.application'
 
-# ✅ Database (SQLite for local dev; not ideal for Render production)
+# ✅ Database (PostgreSQL via DATABASE_URL; fallback to SQLite for local dev)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
