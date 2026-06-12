@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ✅ Security: use environment variables
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-default")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "erp-mm0g.onrender.com,localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "asif-web-app.onrender.com,erp-mm0g.onrender.com,localhost,127.0.0.1").split(",")
 
 # Application definition
 INSTALLED_APPS = [
