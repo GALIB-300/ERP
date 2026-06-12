@@ -26,7 +26,6 @@ packaging==25.0
 pillow==11.3.0
 propcache==0.3.2
 psycopg==3.2.9
-psycopg-binary==3.2.9
 psycopg2-binary==2.9.10
 pycparser==2.22
 PyJWT==2.10.1
@@ -39,3 +38,4 @@ urllib3==2.5.0
 waitress==3.0.2
 whitenoise==6.6.0
 yarl==1.20.1
+psycopg-binary==3.2.13
